@@ -16,6 +16,8 @@ func main() {
 func StartingServer() {
 	mux := mux.NewRouter()
 	mux.HandleFunc("/update/number", controller.UpdateNumberController)
+	mux.HandleFunc("/create", controller.Create)
+
 	server := &http.Server{
 		ReadTimeout:  2 * time.Second,
 		WriteTimeout: 2 * time.Second,
