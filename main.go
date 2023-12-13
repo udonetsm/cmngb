@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/udonetsm/client/models"
+	"github.com/udonetsm/server/database"
 )
 
 func main() {
@@ -38,5 +39,6 @@ func UpdateNumber(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	database.Unumber()
 	//use a to update contact in db.
 }
