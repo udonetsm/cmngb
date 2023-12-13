@@ -1,19 +1,13 @@
 package database
 
 import (
-	"fmt"
 	"log"
 
-	"github.com/udonetsm/server/use"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/udonetsm/client/models"
 )
 
-func Unumber() {
-	y := use.ReadYamlFile("database/cfg.yaml")
-	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", y.User, y.Pass, y.Host, y.Port, y.DBNM, y.SSLM)
-	_, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal(err)
-	}
+func UpdateNumber(rj *models.RequestJSON) {
+	y := &models.YAMLObject{}
+	y.YAMLCfg("database/cfg.yaml")
+	log.Println(y, rj)
 }

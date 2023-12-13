@@ -1,19 +1,22 @@
 package use
 
 import (
+	"encoding/json"
+	"io"
 	"log"
-	"os"
+	"net/http"
 
 	"github.com/udonetsm/client/models"
-	"gopkg.in/yaml.v2"
 )
 
-func ReadYamlFile(path string) *models.YAMLObject {
-	data, err := os.ReadFile(path)
+func UnpackRequest(r *http.Request) {
+	a := &models.RequestJSON{}
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	y := &models.YAMLObject{}
-	err = yaml.Unmarshal(data, y)
-	return y
+	err = json.Unmarshal(data, a)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
