@@ -8,6 +8,6 @@ import (
 
 func UpdateNumber(rj *models.RequestJSON) {
 	y := &models.YAMLObject{}
-	y.YAMLCfg("database/cfg.yaml")
-	log.Println(y, rj)
+	db := models.LoadCfgAndGetDB(y, "database/cfg.yaml")
+	log.Println(db)
 }
