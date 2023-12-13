@@ -1,15 +1,12 @@
 package main
 
 import (
-	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/udonetsm/client/models"
-	"github.com/udonetsm/server/database"
+	"github.com/udonetsm/server/controller"
 )
 
 func main() {
@@ -18,7 +15,7 @@ func main() {
 
 func StartingServer() {
 	mux := mux.NewRouter()
-	mux.HandleFunc("/update/number", UpdateNumber)
+	mux.HandleFunc("/update/number", controller.UpdateNumberController)
 	server := &http.Server{
 		ReadTimeout:  2 * time.Second,
 		WriteTimeout: 2 * time.Second,
@@ -27,18 +24,4 @@ func StartingServer() {
 		Addr:         ":8080",
 	}
 	log.Println(server.ListenAndServe())
-}
-
-func UpdateNumber(w http.ResponseWriter, r *http.Request) {
-	a := &models.RequestJSON{}
-	data, err := io.ReadAll(r.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = json.Unmarshal(data, a)
-	if err != nil {
-		log.Fatal(err)
-	}
-	database.Unumber()
-	//use a to update contact in db.
 }
