@@ -4,7 +4,8 @@ go 1.21.4
 
 require (
 	github.com/gorilla/mux v1.8.1
-	github.com/udonetsm/client/models v0.0.0-20231213151717-b6efe8733539
+	github.com/udonetsm/client/models v0.0.0-20231216084822-1231efaecfef
+	gorm.io/gorm v1.25.5
 )
 
 require (
@@ -19,5 +20,4 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gorm.io/driver/postgres v1.5.4 // indirect
-	gorm.io/gorm v1.25.5 // indirect
 )

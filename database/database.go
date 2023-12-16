@@ -1,8 +1,6 @@
 package database
 
 import (
-	"fmt"
-
 	"github.com/udonetsm/client/models"
 	"gorm.io/gorm"
 )
@@ -13,14 +11,7 @@ func LoadDb() *gorm.DB {
 	return db
 }
 
-func UpdateNumber(rj *models.RequestJSON) {
+func Create(j *models.JSONObject) error {
 	db := LoadDb()
-	db.Model(&models.JSONObject{}).Where("number=?", rj.Target).Update("entries_id", rj.Upgrade)
-}
-
-func Create(c *models.Contact) {
-	o := &models.JSONObject{}
-	o.Pack(c)
-	// db := LoadDb()
-	fmt.Println(o)
+	return db.Create(j).Error
 }
