@@ -4,39 +4,50 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/udonetsm/client/models"
+	"github.com/udonetsm/server/database"
 )
 
 func UpdateNumberController(w http.ResponseWriter, r *http.Request) {
-	Request(w, r, "update number")
+	req := Request(w, r)
+	fmt.Println(req)
 }
 
 func UpdateNameController(w http.ResponseWriter, r *http.Request) {
-	Request(w, r, "update name")
+	Request(w, r)
 
 }
 
 func UpdateNumListController(w http.ResponseWriter, r *http.Request) {
-	Request(w, r, "update number list")
+	Request(w, r)
 }
 
 func InfoController(w http.ResponseWriter, r *http.Request) {
-	Request(w, r, "info")
+	j := Request(w, r)
+	obj := database.GetInfo(j)
+	w.Write([]byte(obj))
 }
 
 func DeleteController(w http.ResponseWriter, r *http.Request) {
-	Request(w, r, "delete")
 }
 
 func CreateController(w http.ResponseWriter, r *http.Request) {
-	Request(w, r, "create")
-}
-
-func Request(w http.ResponseWriter, r *http.Request, action string) {
-	req, err := io.ReadAll(r.Body)
+	j := Request(w, r)
+	err := database.Create(j)
 	if err != nil {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	fmt.Println(string(req))
-	w.Write([]byte("HELLO" + action))
+	w.Write([]byte("[CREATE OK] " + j.Object))
+}
+
+func Request(w http.ResponseWriter, r *http.Request) *models.Entries {
+	req, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+	}
+	o := &models.Entries{}
+	o.Unpack(req)
+	return o
 }

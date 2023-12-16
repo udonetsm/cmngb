@@ -11,7 +11,18 @@ func LoadDb() *gorm.DB {
 	return db
 }
 
-func Create(j *models.JSONObject) error {
+func GetInfo(j *models.Entries) string {
+	db := LoadDb()
+	db.Table("entries").Select("object").Where("number=?", j.Number).Scan(&j.Object)
+	return j.Object
+}
+
+func Create(j *models.Entries) error {
 	db := LoadDb()
 	return db.Create(j).Error
+}
+
+func UpdateNumber(j *models.Entries) error {
+	db := LoadDb()
+	return db.Update("", "").Error
 }
