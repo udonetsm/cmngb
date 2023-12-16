@@ -26,7 +26,7 @@ func UpdateNumListController(w http.ResponseWriter, r *http.Request) {
 func InfoController(w http.ResponseWriter, r *http.Request) {
 	j := Request(w, r)
 	obj := database.GetInfo(j)
-	w.Write([]byte(obj))
+	w.Write([]byte("[INFO]" + obj))
 }
 
 func DeleteController(w http.ResponseWriter, r *http.Request) {
