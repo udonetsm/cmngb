@@ -51,7 +51,7 @@ func DeleteController(w http.ResponseWriter, r *http.Request) {
 	}
 	err := database.Delete(j)
 	if err != nil {
-		w.Write([]byte(err.Error() + "\n!No affected!"))
+		w.Write([]byte(err.Error()))
 		return
 	}
 	w.Write([]byte("[DELETE OK] " + o))
