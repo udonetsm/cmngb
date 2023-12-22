@@ -2,6 +2,7 @@ package controller
 
 import (
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/udonetsm/client/models"
@@ -24,6 +25,7 @@ func UpdateNumberController(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	// write only modified field
 	w.Write([]byte(j.Object))
+	log.Println("Number list updated general number by", j.Number, "new object", j.Object)
 }
 
 // this function unpacks json from request
@@ -43,6 +45,8 @@ func UpdateNameController(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	// write only modified field
 	w.Write([]byte(j.Object))
+	log.Println("Number list updated name by", j.Number, "new object", j.Object)
+
 }
 
 // this function updates general number of contct in db and
@@ -60,6 +64,7 @@ func UpdateNumListController(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	// write only modified field
 	w.Write([]byte(j.Object))
+	log.Println("Number list updated number list by", j.Number, "new object", j.Object)
 }
 
 // returns json string of contact from database(field object).
@@ -73,6 +78,7 @@ func InfoController(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusFound)
 	w.Write([]byte(j.Object))
+	log.Println("Get info by", j.Number)
 }
 
 // Unpacks json from request body and delete target contact
@@ -88,6 +94,7 @@ func DeleteController(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(j.Object))
+	log.Println("Deleted", j.Object)
 }
 
 // Unpacks request body, call Create from database
@@ -103,6 +110,7 @@ func CreateController(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(j.Object))
+	log.Println("Created", j.Object)
 }
 
 // This is a local function for unpacking jsons from requests

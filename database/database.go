@@ -13,7 +13,7 @@ import (
 
 func LoadDb() (*gorm.DB, *sql.DB) {
 	y := &models.YAMLObject{}
-	db := models.LoadCfgAndGetDB(y, "database/cfg.yaml")
+	db := models.LoadCfgAndGetDB(y, "/etc/cmngr/cfg.yaml")
 	d, err := db.DB()
 	if err != nil {
 		log.Fatal(err)

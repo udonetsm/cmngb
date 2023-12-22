@@ -29,5 +29,6 @@ func StartingServer() {
 		Handler:      mux,
 		Addr:         ":8080",
 	}
+	log.Println("Starting at", time.Now())
 	log.Println(server.ListenAndServe())
 }
