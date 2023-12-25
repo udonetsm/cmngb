@@ -25,7 +25,7 @@ func GetInfo(j *models.Entries) error {
 	db, d := LoadDb()
 	defer d.Close()
 	tx := db.Where("number = ?", j.Number).Find(j).Scan(j)
-	if j.Object == "{}" {
+	if tx.RowsAffected < 1 {
 		tx.Error = errors.New("NOT FOUND")
 	}
 	return tx.Error

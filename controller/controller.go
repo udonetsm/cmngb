@@ -7,7 +7,15 @@ import (
 
 	"github.com/udonetsm/client/models"
 	"github.com/udonetsm/server/database"
+	"github.com/udonetsm/server/use"
 )
+
+// This function write in ResponseWriter al of errors, header with http.Status and logging it
+func UnificatedErrorCapturing(j *models.Entries, w http.ResponseWriter, err error, status int, funcName string) {
+	w.WriteHeader(status)
+	w.Write([]byte(err.Error()))
+	log.Println("Failed call function", funcName, "for", j.Object, "with status", status, err.Error())
+}
 
 // Unpack json from request body
 // Update column number in database and
@@ -15,11 +23,17 @@ import (
 func UpdateNumberController(w http.ResponseWriter, r *http.Request) {
 	j := request(w, r)
 	c := &models.Contact{}
-	models.UnpackingContact(c, []byte(j.Object))
-	err := database.UpdateNumber(j, c.Number)
+	// Must valid new user Number.
+	// User number must contains only numerics
+	err := use.MatchNumber(j, c)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest, "UpdateNumber")
+		return
+	}
+	models.UnpackingContact(c, []byte(j.Object))
+	err = database.UpdateNumber(j, c.Number)
+	if err != nil {
+		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest, "[UpdateNumber]")
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -34,12 +48,16 @@ func UpdateNumberController(w http.ResponseWriter, r *http.Request) {
 func UpdateNameController(w http.ResponseWriter, r *http.Request) {
 	j := request(w, r)
 	c := &models.Contact{}
+	err := use.MatchName(j, c)
+	if err != nil {
+		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest, "[UpdateName]")
+		return
+	}
 	models.UnpackingContact(c, []byte(j.Object))
 	// call database package function using name of upgradable json field in database
-	err := database.Update(j, "name", c.Name)
+	err = database.Update(j, "name", c.Name)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest, "[UpdateName]")
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -57,8 +75,7 @@ func UpdateNumListController(w http.ResponseWriter, r *http.Request) {
 	models.UnpackingContact(c, []byte(j.Object))
 	err := database.Update(j, "nlist", c.NumberList)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest, "[UpdateNumList]")
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -72,8 +89,7 @@ func InfoController(w http.ResponseWriter, r *http.Request) {
 	j := request(w, r)
 	err := database.GetInfo(j)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest, "[Info]")
 		return
 	}
 	w.WriteHeader(http.StatusFound)
@@ -88,8 +104,7 @@ func DeleteController(w http.ResponseWriter, r *http.Request) {
 	j := request(w, r)
 	err := database.Delete(j)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest, "[Delete]")
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -102,10 +117,14 @@ func DeleteController(w http.ResponseWriter, r *http.Request) {
 // and status code bad request
 func CreateController(w http.ResponseWriter, r *http.Request) {
 	j := request(w, r)
-	err := database.Create(j)
+	err := use.Matching(j)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest, "Create")
+		return
+	}
+	err = database.Create(j)
+	if err != nil {
+		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest, "[Create]")
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -117,8 +136,8 @@ func CreateController(w http.ResponseWriter, r *http.Request) {
 func request(w http.ResponseWriter, r *http.Request) *models.Entries {
 	req, err := io.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Something wrong. Try later"))
 	}
 	o := &models.Entries{}
 	models.Unpacking(o, req)

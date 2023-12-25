@@ -4,7 +4,7 @@ go 1.21.4
 
 require (
 	github.com/gorilla/mux v1.8.1
-	github.com/udonetsm/client/models v0.0.0-20231220132812-3ad4f78f6501
+	github.com/udonetsm/client/models v0.0.0-20231222155318-c9f3245f205b
 	gorm.io/gorm v1.25.5
 )
 

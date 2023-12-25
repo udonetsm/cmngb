@@ -46,6 +46,8 @@ github.com/udonetsm/client/models v0.0.0-20231220131759-52f662933442 h1:mnlAi5uY
 github.com/udonetsm/client/models v0.0.0-20231220131759-52f662933442/go.mod h1:BI/SDV83TX33aJKy3QX9csWNgTG/t15gc012tj2kngw=
 github.com/udonetsm/client/models v0.0.0-20231220132812-3ad4f78f6501 h1:lW2rrNEj/d3qSOcB2O4fBETv8KTFuOSUzkwVKycZljM=
 github.com/udonetsm/client/models v0.0.0-20231220132812-3ad4f78f6501/go.mod h1:BI/SDV83TX33aJKy3QX9csWNgTG/t15gc012tj2kngw=
+github.com/udonetsm/client/models v0.0.0-20231222155318-c9f3245f205b h1:inOeCUflsTy7EO9TxjMAFUYF4Y3Mx3PItAVT8Djpe+M=
+github.com/udonetsm/client/models v0.0.0-20231222155318-c9f3245f205b/go.mod h1:BI/SDV83TX33aJKy3QX9csWNgTG/t15gc012tj2kngw=
 golang.org/x/crypto v0.14.0 h1:wBqGXzWJW6m1XrIKlAH0Hs1JJ7+9KBwnIO8v66Q9cHc=
 golang.org/x/crypto v0.14.0/go.mod h1:MVFd36DqK4CsrnJYDkBA3VC4m2GkXAM0PvzMCn4JQf4=
 golang.org/x/crypto v0.16.0 h1:mMMrFzRSCF0GvB7Ne27XVtVAaXLrPmgPC7/v0tkwHaY=
