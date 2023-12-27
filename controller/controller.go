@@ -138,7 +138,7 @@ func CreateController(w http.ResponseWriter, r *http.Request) {
 	log.Println("Created", j.Object)
 }
 
-// Add function for matching internal target number
+// Function for matching internal target number
 // and JSON object number. If aren't equal write error in ResponseWriter
 func matchJsonFieldAndTarget(e *models.Entries) (err error) {
 	c := &models.Contact{}
