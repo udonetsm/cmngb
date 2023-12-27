@@ -21,6 +21,10 @@ func UnificatedErrorCapturing(e *models.Entries, w http.ResponseWriter, err erro
 // field num of json in database
 func UpdateNumberController(w http.ResponseWriter, r *http.Request) {
 	e := request(w, r)
+	if e.Error != nil {
+		UnificatedErrorCapturing(e, w, e.Error, http.StatusBadRequest)
+		return
+	}
 	c := &models.Contact{}
 	// Must valid new user Number.
 	// User number must contains only numerics
@@ -46,6 +50,10 @@ func UpdateNumberController(w http.ResponseWriter, r *http.Request) {
 // and call target function from database package.
 func UpdateNameController(w http.ResponseWriter, r *http.Request) {
 	e := request(w, r)
+	if e.Error != nil {
+		UnificatedErrorCapturing(e, w, e.Error, http.StatusBadRequest)
+		return
+	}
 	c := &models.Contact{}
 	err := use.MatchName(e, c)
 	if err != nil {
@@ -70,6 +78,10 @@ func UpdateNameController(w http.ResponseWriter, r *http.Request) {
 // same updates field num in json object in database
 func UpdateNumListController(w http.ResponseWriter, r *http.Request) {
 	e := request(w, r)
+	if e.Error != nil {
+		UnificatedErrorCapturing(e, w, e.Error, http.StatusBadRequest)
+		return
+	}
 	c := &models.Contact{}
 	models.UnpackingContact(c, e)
 	err := database.Update(e, "nlist", c.NumberList)
@@ -86,6 +98,10 @@ func UpdateNumListController(w http.ResponseWriter, r *http.Request) {
 // returns json string of contact from database(field object).
 func InfoController(w http.ResponseWriter, r *http.Request) {
 	e := request(w, r)
+	if e.Error != nil {
+		UnificatedErrorCapturing(e, w, e.Error, http.StatusBadRequest)
+		return
+	}
 	err := database.GetInfo(e)
 	if err != nil {
 		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
@@ -101,6 +117,10 @@ func InfoController(w http.ResponseWriter, r *http.Request) {
 // if error isn't nil
 func DeleteController(w http.ResponseWriter, r *http.Request) {
 	e := request(w, r)
+	if e.Error != nil {
+		UnificatedErrorCapturing(e, w, e.Error, http.StatusBadRequest)
+		return
+	}
 	err := database.Delete(e)
 	if err != nil {
 		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
@@ -116,6 +136,10 @@ func DeleteController(w http.ResponseWriter, r *http.Request) {
 // and status code bad request
 func CreateController(w http.ResponseWriter, r *http.Request) {
 	e := request(w, r)
+	if e.Error != nil {
+		UnificatedErrorCapturing(e, w, e.Error, http.StatusBadRequest)
+		return
+	}
 	err := use.MatchJsonFieldAndTarget(e)
 	if err != nil {
 		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
@@ -145,8 +169,5 @@ func request(w http.ResponseWriter, r *http.Request) *models.Entries {
 	}
 	e := &models.Entries{}
 	models.UnpackingEntries(e, req)
-	if e.Error != nil {
-		UnificatedErrorCapturing(e, w, e.Error, http.StatusBadRequest)
-	}
 	return e
 }
