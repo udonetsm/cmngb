@@ -15,7 +15,7 @@ const (
 
 func MatchName(e *models.Entries, c *models.Contact) (err error) {
 	regName := regexp.MustCompile(reName)
-	models.UnpackingContact(c, []byte(e.Object))
+	models.UnpackingContact(c, e)
 	ok := regName.Match([]byte(c.Name))
 	if !ok {
 		err = errors.New("INVALID NAME")
@@ -27,7 +27,7 @@ func MatchName(e *models.Entries, c *models.Contact) (err error) {
 func MatchNumber(e *models.Entries, c *models.Contact) (err error) {
 	regNumber := regexp.MustCompile(reNumber)
 	// Unpack Object fiels of models.Entries to contact
-	models.UnpackingContact(c, []byte(e.Object))
+	models.UnpackingContact(c, e)
 	ok := regNumber.Match([]byte(c.Number))
 	if !ok {
 		err = errors.New("INVALID NUMBER")

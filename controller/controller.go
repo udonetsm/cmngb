@@ -13,8 +13,7 @@ import (
 
 // This function write in ResponseWriter al of errors, header with http.Status and logging it
 func UnificatedErrorCapturing(j *models.Entries, w http.ResponseWriter, err error, status int) {
-	w.WriteHeader(status)
-	w.Write([]byte(err.Error()))
+	w.Write([]byte(err.Error() + "\n"))
 	log.Println("ERROR for", j.Object, "with status", status, err.Error())
 }
 
@@ -31,7 +30,7 @@ func UpdateNumberController(w http.ResponseWriter, r *http.Request) {
 		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
 		return
 	}
-	models.UnpackingContact(c, []byte(j.Object))
+	models.UnpackingContact(c, j)
 	err = database.UpdateNumber(j, c.Number)
 	if err != nil {
 		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
@@ -54,7 +53,7 @@ func UpdateNameController(w http.ResponseWriter, r *http.Request) {
 		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
 		return
 	}
-	models.UnpackingContact(c, []byte(j.Object))
+	models.UnpackingContact(c, j)
 	// call database package function using name of upgradable json field in database
 	err = database.Update(j, "name", c.Name)
 	if err != nil {
@@ -73,7 +72,7 @@ func UpdateNameController(w http.ResponseWriter, r *http.Request) {
 func UpdateNumListController(w http.ResponseWriter, r *http.Request) {
 	j := request(w, r)
 	c := &models.Contact{}
-	models.UnpackingContact(c, []byte(j.Object))
+	models.UnpackingContact(c, j)
 	err := database.Update(j, "nlist", c.NumberList)
 	if err != nil {
 		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
@@ -118,7 +117,7 @@ func DeleteController(w http.ResponseWriter, r *http.Request) {
 // and status code bad request
 func CreateController(w http.ResponseWriter, r *http.Request) {
 	j := request(w, r)
-	err := matchJsonFieldAndTarget(j)
+	err := MatchJsonFieldAndTarget(j)
 	if err != nil {
 		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
 		return
@@ -140,9 +139,9 @@ func CreateController(w http.ResponseWriter, r *http.Request) {
 
 // Function for matching internal target number
 // and JSON object number. If aren't equal write error in ResponseWriter
-func matchJsonFieldAndTarget(e *models.Entries) (err error) {
+func MatchJsonFieldAndTarget(e *models.Entries) (err error) {
 	c := &models.Contact{}
-	models.UnpackingContact(c, []byte(e.Object))
+	models.UnpackingContact(c, e)
 	if c.Number != e.Number {
 		err = errors.New("TARGET NUMBER AND JSON OBJECT NUMBER AREN'T EQUAL")
 	}
@@ -157,6 +156,9 @@ func request(w http.ResponseWriter, r *http.Request) *models.Entries {
 		w.Write([]byte("Something wrong. Try later"))
 	}
 	e := &models.Entries{}
-	models.Unpacking(e, req)
+	models.UnpackingEntries(e, req)
+	if e.Error != nil {
+		UnificatedErrorCapturing(e, w, e.Error, http.StatusBadRequest)
+	}
 	return e
 }

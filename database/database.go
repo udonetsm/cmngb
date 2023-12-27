@@ -7,13 +7,15 @@ import (
 	"log"
 
 	"github.com/udonetsm/client/models"
+	"github.com/udonetsm/server/servermodels"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 func LoadDb() (*gorm.DB, *sql.DB) {
-	y := &models.YAMLObject{}
-	db := models.LoadCfgAndGetDB(y, "/etc/cmngr/cfg.yaml")
+	y := &servermodels.YAMLObject{}
+	db := servermodels.LoadCfgAndGetDB(y, "/etc/cmngr/cfg.yaml")
 	d, err := db.DB()
 	if err != nil {
 		log.Fatal(err)
