@@ -8,11 +8,25 @@ import (
 	"github.com/udonetsm/client/models"
 )
 
+// Function for matching internal target number
+// and JSON object number. If aren't equal write error in ResponseWriter
+func MatchJsonFieldAndTarget(e *models.Entries) (err error) {
+	c := &models.Contact{}
+	models.UnpackingContact(c, e)
+	if c.Number != e.Number {
+		err = errors.New("TARGET NUMBER AND JSON OBJECT NUMBER AREN'T EQUAL")
+	}
+	return
+}
+
+// For use it in regexp function
 const (
 	reName   = "^[A-Z][a-z]* [A-Z][a-z]*$"
 	reNumber = "^[0-9]*$"
 )
 
+// For matching name using regexp.
+// Name must be like "Name Surname" only
 func MatchName(e *models.Entries, c *models.Contact) (err error) {
 	regName := regexp.MustCompile(reName)
 	models.UnpackingContact(c, e)
@@ -36,15 +50,15 @@ func MatchNumber(e *models.Entries, c *models.Contact) (err error) {
 }
 
 // This function match internal Name and Number and returns error if one of them isn't valid
-func Matching(j *models.Entries) (err error) {
+func Matching(e *models.Entries) (err error) {
 	c := &models.Contact{}
 	answer := ""
 	var errs []error
-	err = MatchName(j, c)
+	err = MatchName(e, c)
 	if err != nil {
 		errs = append(errs, err)
 	}
-	err = MatchNumber(j, c)
+	err = MatchNumber(e, c)
 	if err != nil {
 		errs = append(errs, err)
 	}

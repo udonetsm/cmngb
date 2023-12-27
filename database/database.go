@@ -13,6 +13,8 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+// for load config for database connection
+// configuration it and connect to database.
 func LoadDb() (*gorm.DB, *sql.DB) {
 	y := &servermodels.YAMLObject{}
 	db := servermodels.LoadCfgAndGetDB(y, "/etc/cmngr/cfg.yaml")
@@ -23,10 +25,11 @@ func LoadDb() (*gorm.DB, *sql.DB) {
 	return db, d
 }
 
-func GetInfo(j *models.Entries) error {
+// This function returns object from database like JSON
+func GetInfo(e *models.Entries) error {
 	db, d := LoadDb()
 	defer d.Close()
-	tx := db.Where("number = ?", j.Number).Find(j).Scan(j)
+	tx := db.Where("number = ?", e.Number).Find(e).Scan(e)
 	if tx.RowsAffected < 1 {
 		tx.Error = errors.New("NOT FOUND")
 	}
@@ -34,19 +37,21 @@ func GetInfo(j *models.Entries) error {
 }
 
 // creates contact in database
-func Create(j *models.Entries) error {
+func Create(e *models.Entries) error {
 	db, d := LoadDb()
 	defer d.Close()
-	return db.Create(j).Error
+	return db.Create(e).Error
 }
 
-func UpdateNumber(j *models.Entries, newvalue string) error {
+// This function updates general number phone indatabase
+// And returns new object about contact from database if everything ok
+func UpdateNumber(e *models.Entries, newvalue string) error {
 	db, d := LoadDb()
 	defer d.Close()
 	// command UpdateColumn returns upgraded object from db
 	// it can be pass by http to client
-	tx := db.Model(j).Clauses(clause.Returning{Columns: []clause.Column{{Name: "object"}}}).
-		Where("number=?", j.Number).UpdateColumn("object",
+	tx := db.Model(e).Clauses(clause.Returning{Columns: []clause.Column{{Name: "object"}}}).
+		Where("number=?", e.Number).UpdateColumn("object",
 		gorm.Expr("jsonb_set(object, "+fmt.Sprintf("'{%s}',", "num")+
 			fmt.Sprintf(`'"%s"')`, newvalue))).UpdateColumn("number", newvalue)
 	if tx.RowsAffected == 0 {
@@ -55,12 +60,13 @@ func UpdateNumber(j *models.Entries, newvalue string) error {
 	return tx.Error
 }
 
-func Update(j *models.Entries, upgradableJSONfield string, newvalue interface{}) error {
+// This function can upgrade all json field in database except number field
+func Update(e *models.Entries, upgradableJSONfield string, newvalue interface{}) error {
 	db, d := LoadDb()
 	defer d.Close()
 	// command Update returns upgraded object from db
 	// it can be pass by http to client
-	tx := db.Model(j).Where("number=?", j.Number).Clauses(clause.Returning{Columns: []clause.Column{{Name: "object"}}}).UpdateColumn("object",
+	tx := db.Model(e).Where("number=?", e.Number).Clauses(clause.Returning{Columns: []clause.Column{{Name: "object"}}}).UpdateColumn("object",
 		gorm.Expr("jsonb_set(object, "+fmt.Sprintf("'{%s}',", upgradableJSONfield)+
 			fmt.Sprintf(`'"%s"')`, newvalue)))
 	if tx.RowsAffected == 0 {
@@ -70,10 +76,10 @@ func Update(j *models.Entries, upgradableJSONfield string, newvalue interface{})
 }
 
 // delete contact from database and return deleted object to pass it by http
-func Delete(j *models.Entries) error {
+func Delete(e *models.Entries) error {
 	db, d := LoadDb()
 	defer d.Close()
-	tx := db.Where("number=?", j.Number).Find(j).Scan(j).Delete(j)
+	tx := db.Where("number=?", e.Number).Find(e).Scan(e).Delete(e)
 	if tx.RowsAffected < 1 {
 		tx.Error = errors.New("NOT FOUND")
 	}

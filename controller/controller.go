@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -12,140 +11,129 @@ import (
 )
 
 // This function write in ResponseWriter al of errors, header with http.Status and logging it
-func UnificatedErrorCapturing(j *models.Entries, w http.ResponseWriter, err error, status int) {
+func UnificatedErrorCapturing(e *models.Entries, w http.ResponseWriter, err error, status int) {
 	w.Write([]byte(err.Error() + "\n"))
-	log.Println("ERROR for", j.Object, "with status", status, err.Error())
+	log.Println("ERROR for", e.Object, "with status", status, err.Error())
 }
 
 // Unpack json from request body
 // Update column number in database and
 // field num of json in database
 func UpdateNumberController(w http.ResponseWriter, r *http.Request) {
-	j := request(w, r)
+	e := request(w, r)
 	c := &models.Contact{}
 	// Must valid new user Number.
 	// User number must contains only numerics
-	err := use.MatchNumber(j, c)
+	err := use.MatchNumber(e, c)
 	if err != nil {
-		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
+		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
 		return
 	}
-	models.UnpackingContact(c, j)
-	err = database.UpdateNumber(j, c.Number)
+	models.UnpackingContact(c, e)
+	err = database.UpdateNumber(e, c.Number)
 	if err != nil {
-		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
+		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	// write only modified field
-	w.Write([]byte(j.Object))
-	log.Println("Number list updated general number by", j.Number, "new object", j.Object)
+	w.Write([]byte(e.Object))
+	log.Println("Number list updated general number by", e.Number, "new object", e.Object)
 }
 
 // this function unpacks json from request
 // unpack JSON from this unpacked object
 // and call target function from database package.
 func UpdateNameController(w http.ResponseWriter, r *http.Request) {
-	j := request(w, r)
+	e := request(w, r)
 	c := &models.Contact{}
-	err := use.MatchName(j, c)
+	err := use.MatchName(e, c)
 	if err != nil {
-		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
+		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
 		return
 	}
-	models.UnpackingContact(c, j)
+	models.UnpackingContact(c, e)
 	// call database package function using name of upgradable json field in database
-	err = database.Update(j, "name", c.Name)
+	err = database.Update(e, "name", c.Name)
 	if err != nil {
-		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
+		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	// write only modified field
-	w.Write([]byte(j.Object))
-	log.Println("Number list updated name by", j.Number, "new object", j.Object)
+	w.Write([]byte(e.Object))
+	log.Println("Number list updated name by", e.Number, "new object", e.Object)
 
 }
 
 // this function updates general number of contct in db and
 // same updates field num in json object in database
 func UpdateNumListController(w http.ResponseWriter, r *http.Request) {
-	j := request(w, r)
+	e := request(w, r)
 	c := &models.Contact{}
-	models.UnpackingContact(c, j)
-	err := database.Update(j, "nlist", c.NumberList)
+	models.UnpackingContact(c, e)
+	err := database.Update(e, "nlist", c.NumberList)
 	if err != nil {
-		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
+		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	// write only modified field
-	w.Write([]byte(j.Object))
-	log.Println("Number list updated number list by", j.Number, "new object", j.Object)
+	w.Write([]byte(e.Object))
+	log.Println("Number list updated number list by", e.Number, "new object", e.Object)
 }
 
 // returns json string of contact from database(field object).
 func InfoController(w http.ResponseWriter, r *http.Request) {
-	j := request(w, r)
-	err := database.GetInfo(j)
+	e := request(w, r)
+	err := database.GetInfo(e)
 	if err != nil {
-		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
+		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(http.StatusFound)
-	w.Write([]byte(j.Object))
-	log.Println("Get info by", j.Number)
+	w.Write([]byte(e.Object))
+	log.Println("Get info by", e.Number)
 }
 
 // Unpacks json from request body and delete target contact
 // Write header bad request and error from database.Delete()
 // if error isn't nil
 func DeleteController(w http.ResponseWriter, r *http.Request) {
-	j := request(w, r)
-	err := database.Delete(j)
+	e := request(w, r)
+	err := database.Delete(e)
 	if err != nil {
-		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
+		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(j.Object))
-	log.Println("Deleted", j.Object)
+	w.Write([]byte(e.Object))
+	log.Println("Deleted", e.Object)
 }
 
 // Unpacks request body, call Create from database
 // if Create() returns error, response includes this it
 // and status code bad request
 func CreateController(w http.ResponseWriter, r *http.Request) {
-	j := request(w, r)
-	err := MatchJsonFieldAndTarget(j)
+	e := request(w, r)
+	err := use.MatchJsonFieldAndTarget(e)
 	if err != nil {
-		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
+		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
 		return
 	}
-	err = use.Matching(j)
+	err = use.Matching(e)
 	if err != nil {
-		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
+		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
 		return
 	}
-	err = database.Create(j)
+	err = database.Create(e)
 	if err != nil {
-		UnificatedErrorCapturing(j, w, err, http.StatusBadRequest)
+		UnificatedErrorCapturing(e, w, err, http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(j.Object))
-	log.Println("Created", j.Object)
-}
-
-// Function for matching internal target number
-// and JSON object number. If aren't equal write error in ResponseWriter
-func MatchJsonFieldAndTarget(e *models.Entries) (err error) {
-	c := &models.Contact{}
-	models.UnpackingContact(c, e)
-	if c.Number != e.Number {
-		err = errors.New("TARGET NUMBER AND JSON OBJECT NUMBER AREN'T EQUAL")
-	}
-	return
+	w.Write([]byte(e.Object))
+	log.Println("Created", e.Object)
 }
 
 // This is a local function for unpacking jsons from requests
