@@ -72,7 +72,7 @@ func Delete(e *models.Entries) {
 	tx := db.Select("object").
 		Table("entries").
 		Where("number=?", e.Number).
-		Scan(e.PackedObject).
+		Scan(&e.PackedObject).
 		Delete(e)
 	e.Error = tx.Error
 }
