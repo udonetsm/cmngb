@@ -120,6 +120,8 @@ func errs(w http.ResponseWriter, e *models.Entries, status int) {
 
 // This is a local function for unpacking jsons from requests
 func request(w http.ResponseWriter, r *http.Request) *models.Entries {
+	r.Header.Add("Accept", "appliction/json")
+	r.Header.Add("Content-Type", "application/json")
 	e := &models.Entries{}
 	var req []byte
 	req, e.Error = io.ReadAll(r.Body)
