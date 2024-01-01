@@ -5,7 +5,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // JSON object for making request to server side
@@ -28,7 +27,6 @@ type Entries struct {
 
 // Pack object to json string
 func (j *Entries) PackEntries(contact *Contact) (data []byte, err error) {
-	fmt.Println(err, "LOLOL")
 	if contact.Name == "" && contact.Number == "" && contact.NumberList == nil {
 		contact = nil
 	}
