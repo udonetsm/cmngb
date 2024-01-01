@@ -69,10 +69,10 @@ func Search(e *models.Entries) {
 func Delete(e *models.Entries) {
 	db, d := LoadDb()
 	defer d.Close()
-	tx := db.Table("entries").
-		Select("object").
+	tx := db.Select("object").
+		Table("entries").
 		Where("number=?", e.Number).
-		Scan(e.PackedObject).
+		Scan(&e.PackedObject).
 		Delete(e)
 	e.Error = tx.Error
 }

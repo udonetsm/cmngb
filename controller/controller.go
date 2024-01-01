@@ -124,7 +124,6 @@ func request(w http.ResponseWriter, r *http.Request) *models.Entries {
 	var req []byte
 	req, e.Error = io.ReadAll(r.Body)
 	if e.Error != nil {
-		fmt.Println("ELLL")
 		errs(w, e, http.StatusInternalServerError)
 		return e
 	}
