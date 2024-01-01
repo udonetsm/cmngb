@@ -86,7 +86,23 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateGeneralNumber(w http.ResponseWriter, r *http.Request) {
-
+	e := request(w, r)
+	if e.Error != nil {
+		errs(w, e, http.StatusBadRequest)
+		return
+	}
+	use.Match(e, use.ENUM)
+	if e.Error != nil {
+		errs(w, e, http.StatusBadRequest)
+		return
+	}
+	database.UpdateEntryName(e)
+	if e.Error != nil {
+		errs(w, e, http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, e.PackedObject)
 }
 
 func UpdateName(w http.ResponseWriter, r *http.Request) {

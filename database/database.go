@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	"github.com/udonetsm/server/cfgsrv"
@@ -22,8 +23,18 @@ func LoadDb() (*gorm.DB, *sql.DB) {
 	return db, d
 }
 
-func UpdateEntryNumber(e *models.Entries) (err error) {
-	return
+func UpdateEntryNumber(e *models.Entries) {
+	db, d := LoadDb()
+	defer d.Close()
+	tx := db.Table("entries").
+		Where("number=?", e.Number).
+		Scan(&e.PackedObject).
+		UpdateColumn("object",
+			gorm.Expr("jsonb_set(object, "+
+				fmt.Sprintf("'{%s}',", "num")+
+				fmt.Sprintf(`'"%s"')`, e.Object.Number))).
+		UpdateColumn("number", e.Object.Number)
+	e.Error = tx.Error
 }
 
 func UpdateEntryName(e *models.Entries) (err error) {
