@@ -20,7 +20,8 @@ func StartingServer() {
 	mux.HandleFunc("/update/name", controller.MW(controller.UpdateName))
 	mux.HandleFunc("/update/listnumber", controller.MW(controller.UpdateListNumber))
 	mux.HandleFunc("/info", controller.MW(controller.Info))
-	mux.HandleFunc("/delete", controller.MW(controller.Delete))
+	mux.HandleFunc("/search", controller.Search)
+	mux.HandleFunc("/delete", controller.Delete)
 
 	server := &http.Server{
 		ReadTimeout:  2 * time.Second,

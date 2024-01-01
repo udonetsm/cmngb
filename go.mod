@@ -4,7 +4,6 @@ go 1.21.4
 
 require (
 	github.com/gorilla/mux v1.8.1
-	github.com/udonetsm/client v0.0.0-20231228152106-aad7844b26ca
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.5.4
 	gorm.io/gorm v1.25.5

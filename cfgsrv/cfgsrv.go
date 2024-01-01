@@ -1,4 +1,4 @@
-package servermodels
+package cfgsrv
 
 import (
 	"fmt"
@@ -18,6 +18,9 @@ type YAMLObject struct {
 	Pass string `yaml:"password"`
 	SSLM string `yaml:"sslmode"`
 	DBNM string `yaml:"dbname"`
+}
+type Ntrs struct {
+	Number, Object string
 }
 
 // duck typing for load data base connection config

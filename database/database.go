@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/udonetsm/client/models"
-	"github.com/udonetsm/server/servermodels"
+	"github.com/udonetsm/server/cfgsrv"
+	"github.com/udonetsm/server/models"
 
 	"gorm.io/gorm"
 )
@@ -13,8 +13,8 @@ import (
 // for load config for database connection
 // configuration it and connect to database.
 func LoadDb() (*gorm.DB, *sql.DB) {
-	y := &servermodels.YAMLObject{}
-	db := servermodels.LoadCfgAndGetDB(y, "/etc/cmngr/cfg.yaml")
+	y := &cfgsrv.YAMLObject{}
+	db := cfgsrv.LoadCfgAndGetDB(y, "/etc/cmngr/cfg.yaml")
 	d, err := db.DB()
 	if err != nil {
 		log.Fatal(err)
@@ -34,14 +34,45 @@ func UpdateEntryListNumber(e *models.Entries) (err error) {
 	return
 }
 
-func Info(e *models.Entries) (err error) {
-	return
+func Create(e *models.Entries) {
+	db, d := LoadDb()
+	defer d.Close()
+	tx := db.Exec("insert into entries(number, object) values(?,?)", e.Number, e.Object)
+	e.Error = tx.Error
 }
 
-func Delete(e *models.Entries) (err error) {
-	return
+func Info(e *models.Entries) {
+	db, d := LoadDb()
+	defer d.Close()
+	tx := db.Table("entries").
+		Select("object").
+		Where("number=?", e.Number).
+		Scan(e.PackedObject)
+	e.Error = tx.Error
 }
 
-func Create(e *models.Entries) (err error) {
-	return
+func Search(e *models.Entries) {
+	db, d := LoadDb()
+	defer d.Close()
+	rows, err := db.Table("entries").
+		Select("object").
+		Where("object->>'name' like ?", "%"+e.Object.Name+"%").
+		Rows()
+	e.Error = err
+	for rows.Next() {
+		a := ""
+		rows.Scan(&a)
+		e.ObjectList = append(e.ObjectList, "\n", a)
+	}
+}
+
+func Delete(e *models.Entries) {
+	db, d := LoadDb()
+	defer d.Close()
+	tx := db.Table("entries").
+		Select("object").
+		Where("number=?", e.Number).
+		Scan(e.PackedObject).
+		Delete(e)
+	e.Error = tx.Error
 }

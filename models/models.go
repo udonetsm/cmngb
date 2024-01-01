@@ -5,6 +5,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // JSON object for making request to server side
@@ -12,18 +13,22 @@ import (
 // target for fill entry_id in database
 // Contact for build json string for use functions on the server side
 type Entries struct {
-	Number string `gorm:"number" json:"number"`
+	Number string `gorm:"number,omitempty" json:"number"`
 	// Object can be empty if using the DeleteOrInfo function.
 	// See package github.com/udonetsm/client/http
-	Object *Contact `gorm:"object" json:"object,omitempty"`
+	Object *Contact `gorm:"object,omitempty" json:"object,omitempty"`
 	// Error using on the server side for
 	// answer about errors to clients...
 	// default empty
-	Error error `json:"error,omitempty" gorm:"-" `
+
+	Error        error    `json:"error,omitempty" gorm:"-" `
+	ObjectList   []string `json:"objectlist,omitempty" gorm:"-"`
+	PackedObject string   `json:"packedobject,omitempty" gorm:"-"`
 }
 
 // Pack object to json string
 func (j *Entries) PackEntries(contact *Contact) (data []byte, err error) {
+	fmt.Println(err, "LOLOL")
 	if contact.Name == "" && contact.Number == "" && contact.NumberList == nil {
 		contact = nil
 	}
@@ -62,18 +67,19 @@ func UnpackingEntries(pu PackUnpackerEntries, data []byte) {
 type Contact struct {
 	Number     string   `json:"num,omitempty"`
 	Name       string   `json:"name,omitempty"`
-	NumberList []string `json:"nlist,omitempty"`
+	NumberList []string `json:",omitempty"`
 }
 
 type PackUnpackerContact interface {
 	UnpackContact(*Entries) []byte
+	Pack(*Entries) []byte
 }
 
 func UnpackingContact(p PackUnpackerContact, e *Entries) {
 	p.UnpackContact(e)
 }
 
-func (c *Contact) PackContact(e *Entries) (data []byte) {
+func PackContact(e *Entries) (data []byte) {
 	data, err := json.Marshal(e.Object)
 	if err != nil {
 		e.Error = err
