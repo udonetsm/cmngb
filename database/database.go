@@ -26,15 +26,14 @@ func LoadDb() (*gorm.DB, *sql.DB) {
 func UpdateEntryNumber(e *models.Entries) {
 	db, d := LoadDb()
 	defer d.Close()
-	tx := db.Table("entries").
-		Where("number=?", e.Number).
-		Scan(&e.PackedObject).
-		UpdateColumn("object",
-			gorm.Expr("jsonb_set(object, "+
-				fmt.Sprintf("'{%s}',", "num")+
-				fmt.Sprintf(`'"%s"')`, e.Object.Number))).
-		UpdateColumn("number", e.Object.Number)
-	e.Error = tx.Error
+	rows, err := db.
+		Exec("update entries set number=? where number=? returning object",
+			e.Number, e.Object.Number).Rows()
+	if err != nil {
+		e.Error = err
+	}
+	rows.Scan(&e.Object)
+	fmt.Println(e)
 }
 
 func UpdateEntryName(e *models.Entries) (err error) {

@@ -20,9 +20,9 @@ type Entries struct {
 	// answer about errors to clients...
 	// default empty
 
-	Error        error    `json:"error,omitempty" gorm:"-" `
-	ObjectList   []string `json:"objectlist,omitempty" gorm:"-"`
-	PackedObject string   `json:"packedobject,omitempty" gorm:"-"`
+	Error        error    `json:"error,omitempty" gorm:"error,omitempty" `
+	ObjectList   []string `json:"objectlist,omitempty" gorm:"objectlist,omitempty"`
+	PackedObject string   `json:"packedobject,omitempty" gorm:"packedobject,omitempty"`
 }
 
 // Pack object to json string

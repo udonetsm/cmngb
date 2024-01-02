@@ -96,7 +96,7 @@ func UpdateGeneralNumber(w http.ResponseWriter, r *http.Request) {
 		errs(w, e, http.StatusBadRequest)
 		return
 	}
-	database.UpdateEntryName(e)
+	database.UpdateEntryNumber(e)
 	if e.Error != nil {
 		errs(w, e, http.StatusBadRequest)
 		return
