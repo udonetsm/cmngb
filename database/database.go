@@ -15,7 +15,7 @@ func LoadDb() *gorm.DB {
 
 func Info(e *models.Entries) {
 	db := LoadDb()
-	tx := db.First(e, "id=?", e.Id)
+	tx := db.First(e)
 	e.Error = tx.Error
 }
 
