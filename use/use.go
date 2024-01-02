@@ -28,12 +28,12 @@ func Match(e *models.Entries, matchable string) {
 	case "entrynumber":
 		exp = regexp.MustCompile(regexpNumber)
 		if ok := exp.Match([]byte(e.Id)); !ok {
-			e.Error = errors.New("INVALID ENTRY NUMBER " + e.Id)
+			e.Error = errors.New("INVALID ENTRY NUMBER")
 		}
 	case "contactnumber":
 		exp = regexp.MustCompile(regexpNumber)
 		if ok := exp.Match([]byte(e.Jcontact.Number)); !ok {
-			e.Error = errors.New("INVALID CONTACT NUMBER " + e.Jcontact.Number)
+			e.Error = errors.New("INVALID CONTACT NUMBER")
 		}
 	case "contactandentrynumbers":
 		if e.Id != e.Jcontact.Number {
