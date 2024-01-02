@@ -9,6 +9,7 @@ import (
 
 	"github.com/udonetsm/cmngb/database"
 	"github.com/udonetsm/cmngb/models"
+	"github.com/udonetsm/cmngb/use"
 )
 
 const (
@@ -140,6 +141,24 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ok(w, e.Contact, e.Id)
+}
+
+func MW(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		r.Header.Set("Accept", "application/json")
+		e := &models.Entries{}
+		request(w, r, e)
+		if e.Error != nil {
+			errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+			return
+		}
+		use.Match(e, use.ENUM)
+		if e.Error != nil {
+			errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
 }
 
 // This is a local funtion for get data from request.
