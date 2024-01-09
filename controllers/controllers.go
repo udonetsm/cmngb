@@ -87,8 +87,14 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
+	use.Match(e, use.ENME)
+	if e.Error != nil {
+		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+		return
+	}
 	// Pack all data to json
 	data := models.PackingEntry(e, e.Jcontact)
+	// data := models.PackingEntry(e, e.Jcontact)
 	e.Contact = string(data)
 	e.Jcontact = nil
 	if e.Error != nil {
@@ -170,11 +176,7 @@ func request(w http.ResponseWriter, r *http.Request, e *models.Entries) {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
-	models.UnpackingEntry(e, data)
-	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
-		return
-	}
+	models.EntryUnpacking(e, data)
 	r.Body = io.NopCloser(bytes.NewBuffer(data))
 }
 
