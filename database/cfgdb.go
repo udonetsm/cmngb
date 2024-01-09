@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -11,15 +10,13 @@ import (
 )
 
 type YAMLObject struct {
-	Host string `yaml:"host"`
-	Port string `yaml:"port"`
-	User string `yaml:"user"`
-	Pass string `yaml:"password"`
-	SSLM string `yaml:"sslmode"`
-	DBNM string `yaml:"dbname"`
-}
-type Ntrs struct {
-	Number, Object string
+	Host  string `yaml:"host"`
+	Port  string `yaml:"port"`
+	User  string `yaml:"user"`
+	Pass  string `yaml:"password"`
+	SSLM  string `yaml:"sslmode"`
+	DBNM  string `yaml:"dbname"`
+	Error error  `yaml:"-"`
 }
 
 // duck typing for load data base connection config
@@ -32,11 +29,12 @@ type CfgDBGetter interface {
 func (y *YAMLObject) YAMLCfg(path string) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatal(err)
+		y.Error = err
+		return
 	}
 	err = yaml.Unmarshal(data, y)
 	if err != nil {
-		log.Println(err)
+		y.Error = err
 		return
 	}
 }
@@ -49,7 +47,7 @@ func (y *YAMLObject) GetDB() (db *gorm.DB) {
 	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", y.User, y.Pass, y.Host, y.Port, y.DBNM, y.SSLM)
 	db, err = gorm.Open(postgres.Open(dsn))
 	if err != nil {
-		log.Println(err)
+		y.Error = err
 		return
 	}
 	return
