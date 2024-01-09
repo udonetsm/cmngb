@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 )
 
 type Entries struct {
@@ -19,9 +18,12 @@ type Contact struct {
 	List   []string `json:"list,omitempty"`
 }
 
-type PackUnpackerEntry interface {
-	PackEntrie(c *Contact) []byte
+type EntryUnpacker interface {
 	UnpackEntry(data []byte)
+}
+
+type EntryPacker interface {
+	PackEntrie(c *Contact) []byte
 }
 
 func (e *Entries) PackEntrie(c *Contact) (data []byte) {
@@ -33,7 +35,7 @@ func (e *Entries) PackEntrie(c *Contact) (data []byte) {
 	return
 }
 
-func PackingEntry(pu PackUnpackerEntry, c *Contact) (data []byte) {
+func PackingEntry(pu EntryPackUnpacker, c *Contact) (data []byte) {
 	data = pu.PackEntrie(c)
 	return
 }
@@ -41,12 +43,17 @@ func PackingEntry(pu PackUnpackerEntry, c *Contact) (data []byte) {
 func (e *Entries) UnpackEntry(data []byte) {
 	err := json.Unmarshal(data, e)
 	if err != nil {
-		e.Error = errors.New("INVALID JSON")
+		e.Error = err
 		return
 	}
 	e.Error = err
 }
 
-func UnpackingEntry(pu PackUnpackerEntry, data []byte) {
+func EntryUnpacking(pu EntryPackUnpacker, data []byte) {
 	pu.UnpackEntry(data)
+}
+
+type EntryPackUnpacker interface {
+	EntryPacker
+	EntryUnpacker
 }
