@@ -24,20 +24,24 @@ func Match(e *models.Entries, matchable string) {
 		exp = regexp.MustCompile(regexpName)
 		if ok := exp.Match([]byte(e.Jcontact.Name)); !ok {
 			e.Error = errors.New("INVALID NAME")
+			return
 		}
 	case "entrynumber":
 		exp = regexp.MustCompile(regexpNumber)
-		if ok := exp.Match([]byte(e.Id)); !ok {
+		if ok := exp.Match([]byte(e.Id)); !ok || e.Id == "" {
 			e.Error = errors.New("INVALID ENTRY NUMBER")
+			return
 		}
 	case "contactnumber":
 		exp = regexp.MustCompile(regexpNumber)
 		if ok := exp.Match([]byte(e.Jcontact.Number)); !ok {
 			e.Error = errors.New("INVALID CONTACT NUMBER")
+			return
 		}
 	case "contactandentrynumbers":
 		if e.Id != e.Jcontact.Number {
 			e.Error = errors.New(ENUM + e.Id + " AND " + CNUM + e.Jcontact.Number + " AREN'T EQUAL")
+			return
 		}
 	}
 }
