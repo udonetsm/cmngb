@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,9 +15,9 @@ func main() {
 func BuildServer() {
 	mux := mux.NewRouter()
 	mux.HandleFunc("/info", controllers.MW(controllers.Info))
-	mux.HandleFunc("/search", controllers.MW(controllers.Search))
+	mux.HandleFunc("/search", controllers.Search)
 	mux.HandleFunc("/delete/by/id", controllers.MW(controllers.DeleteById))
-	mux.HandleFunc("/create", controllers.Create)
+	mux.HandleFunc("/create", controllers.MW(controllers.Create))
 	mux.HandleFunc("/update/number", controllers.MW(controllers.UpdateNumber))
 	mux.HandleFunc("/update/name", controllers.MW(controllers.Update))
 	mux.HandleFunc("/update/list", controllers.MW(controllers.Update))
@@ -24,5 +25,6 @@ func BuildServer() {
 		Handler: mux,
 		Addr:    ":8080",
 	}
+	log.Println("Starting server")
 	server.ListenAndServe()
 }
