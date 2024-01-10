@@ -75,6 +75,9 @@ func DeleteById(e *models.Entries) {
 	}
 }
 
+// Search and return all contacts which contains
+// target string in the name field. If Name field is
+// empty, function returns all of contacts in the storage.
 func Create(e *models.Entries) {
 	db := LoadDb(e)
 	if e.Error != nil {
