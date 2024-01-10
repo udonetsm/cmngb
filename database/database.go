@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -29,15 +30,25 @@ func Info(e *models.Entries) {
 	e.Error = tx.Error
 }
 
+// Search and return all contacts which contains
+// target string in the name field. If Name field is
+// empty, function returns all of contacts in the storage.
 func Search(e *models.Entries) {
 	db := LoadDb(e)
 	if e.Error != nil {
 		return
 	}
-	rows, err := db.Model(&models.Entries{}).
-		Select("contact").
-		Where("contact->>'name' like ?", "%"+e.Jcontact.Name+"%").
-		Rows()
+	var rows *sql.Rows
+	var err error
+	if len(e.Jcontact.Name) == 0 {
+		rows, err = db.Model(&models.Entries{}).
+			Select("contact").Rows()
+	} else {
+		rows, err = db.Model(&models.Entries{}).
+			Select("contact").
+			Where("contact->>'name' like ?", "%"+e.Jcontact.Name+"%").
+			Rows()
+	}
 	if err != nil {
 		e.Error = err
 		return
@@ -45,6 +56,10 @@ func Search(e *models.Entries) {
 	for rows.Next() {
 		rows.Scan(&e.Contact)
 		e.ContactList = append(e.ContactList, e.Contact)
+	}
+	if len(e.ContactList) == 0 {
+		e.Error = gorm.ErrRecordNotFound
+		return
 	}
 }
 
