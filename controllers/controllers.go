@@ -92,15 +92,16 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
+
+	e.Jcontact.Number = e.Id
 	// Pack all data to json
 	data := models.PackingEntry(e, e.Jcontact)
-	// data := models.PackingEntry(e, e.Jcontact)
-	e.Contact = string(data)
-	e.Jcontact = nil
 	if e.Error != nil {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
+	e.Contact = string(data)
+	e.Jcontact = nil
 	// Try to insert record in db
 	database.Create(e)
 	if e.Error != nil {
