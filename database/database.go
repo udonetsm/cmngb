@@ -99,11 +99,11 @@ func Create(e *models.Entries) {
 func makeCmd(e *models.Entries, u string) string {
 	switch u {
 	case UNAME:
-		return fmt.Sprintf("update entries set contact=jsonb_set(contact, '{%s}', '\"%v\"') where id='%s' returning contact",
+		return fmt.Sprintf("update entries set contact=jsonb_set(contact, '{%s}', '%s') where id='%s' returning contact",
 			u, e.Jcontact.Name, e.Id)
 	case UNUMB:
-		return fmt.Sprintf("jsonb_set(contact, '{number}', '%v'), id='%s' where id='%s' returning contact",
-			e.Jcontact.Number, e.Jcontact.Number, e.Id)
+		return fmt.Sprintf("update entries set contact=jsonb_set(contact, '{%s}', '%v'), id='%s' where id='%s' returning contact",
+			u, e.Jcontact.Number, e.Jcontact.Number, e.Id)
 	case UNLST:
 		s := "["
 		for i, v := range e.Jcontact.List {
