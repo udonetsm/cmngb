@@ -8,6 +8,12 @@ import (
 	"github.com/udonetsm/cmngb/controllers"
 )
 
+type test struct {
+	Name   string
+	Number string
+	List   []int
+}
+
 func main() {
 	BuildServer()
 }

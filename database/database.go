@@ -2,7 +2,7 @@ package database
 
 import (
 	"database/sql"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -10,12 +10,18 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	UNAME = "name"
+	UNUMB = "number"
+	UNLST = "list"
+)
+
 func LoadDb(e *models.Entries) *gorm.DB {
 	y := &YAMLObject{}
-	db := LoadCfgAndGetDB(y, "./database/cfg.yaml")
+	db := LoadCfgAndGetDB(y, "/etc/cfg.yaml")
 	if y.Error != nil {
 		log.Println(y.Error)
-		e.Error = errors.New("ERROR WHILE LOADING DATABASE")
+		e.Error = gorm.ErrInvalidDB
 		return new(gorm.DB)
 	}
 	return db
@@ -30,6 +36,11 @@ func Info(e *models.Entries) {
 	e.Error = tx.Error
 }
 
+func JSONvalidator(data []byte, a any) bool {
+	err := json.Unmarshal(data, a)
+	return err == nil
+}
+
 // Search and return all contacts which contains
 // target string in the name field. If Name field is
 // empty, function returns all of contacts in the storage.
@@ -41,8 +52,7 @@ func Search(e *models.Entries) {
 	var rows *sql.Rows
 	var err error
 	if len(e.Jcontact.Name) == 0 {
-		rows, err = db.Model(&models.Entries{}).
-			Select("contact").Rows()
+		rows, err = db.Model(&models.Entries{}).Select("contact").Rows()
 	} else {
 		rows, err = db.Model(&models.Entries{}).
 			Select("contact").
@@ -56,10 +66,6 @@ func Search(e *models.Entries) {
 	for rows.Next() {
 		rows.Scan(&e.Contact)
 		e.ContactList = append(e.ContactList, e.Contact)
-	}
-	if len(e.ContactList) == 0 {
-		e.Error = gorm.ErrRecordNotFound
-		return
 	}
 }
 
@@ -90,34 +96,35 @@ func Create(e *models.Entries) {
 	}
 }
 
-func UpdateNumber(e *models.Entries) {
-	db := LoadDb(e)
-	if e.Error != nil {
-		return
-	}
-	rows, err := db.Raw("update entries set contact=" +
-		fmt.Sprintf("jsonb_set(contact, '{number}', '%v'), id='%s' where id='%s' returning contact",
-			e.Jcontact.Number, e.Jcontact.Number, e.Id)).Rows()
-	if err != nil {
-		e.Error = err
-		return
-	}
-	if rows.Next() {
-		err := rows.Scan(&e.Contact)
-		if err != nil {
-			e.Error = err
-			return
+func makeCmd(e *models.Entries, u string) string {
+	switch u {
+	case UNAME:
+		return fmt.Sprintf("update entries set contact=jsonb_set(contact, '{%s}', '\"%v\"') where id='%s' returning contact",
+			u, e.Jcontact.Name, e.Id)
+	case UNUMB:
+		return fmt.Sprintf("jsonb_set(contact, '{number}', '%v'), id='%s' where id='%s' returning contact",
+			e.Jcontact.Number, e.Jcontact.Number, e.Id)
+	case UNLST:
+		s := "["
+		for i, v := range e.Jcontact.List {
+			if i == len(e.Jcontact.List)-1 {
+				s += "\"" + v + "\"]"
+				return fmt.Sprintf("update entries set contact=jsonb_set(contact, '{%s}', '%v') where id='%s' returning contact",
+					u, s, e.Id)
+			}
+			s += "\"" + v + "\" ,"
 		}
 	}
+	e.Error = gorm.ErrRecordNotFound
+	return ""
 }
 
-func Update(e *models.Entries, u string, save any) {
+func Update(e *models.Entries, u string) {
 	db := LoadDb(e)
 	if e.Error != nil {
 		return
 	}
-	cmd := fmt.Sprintf("update entries set contact=jsonb_set(contact, '{%s}', '\"%v\"') where id='%v' returning contact",
-		u, save, e.Id)
+	cmd := makeCmd(e, u)
 	rows, err := db.Raw(cmd).Rows()
 	if err != nil {
 		e.Error = err
