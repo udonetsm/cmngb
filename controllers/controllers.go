@@ -21,12 +21,6 @@ const (
 	ERROR
 )
 
-const (
-	UNAME = "name"
-	UNUMB = "number"
-	UNLST = "list"
-)
-
 // Get target id from request json and
 // and get json of contact
 // record from database using it
@@ -119,12 +113,25 @@ func UpdateNumber(w http.ResponseWriter, r *http.Request) {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
-	database.UpdateNumber(e)
+	database.Update(e, database.UNUMB)
 	if e.Error != nil {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
 	ok(w, e.Contact, e.Id)
+}
+
+func whichURI(r *http.Request) byte {
+	if r.RequestURI == "/update/"+database.UNLST {
+		return 0
+	}
+	if r.RequestURI == "/update/"+database.UNAME {
+		return 1
+	}
+	if r.RequestURI == "/update/"+database.UNUMB {
+		return 2
+	}
+	return 3
 }
 
 // Updates target json field in database
@@ -137,11 +144,16 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
+	indexOfUpgradable := whichURI(r)
 	//Updates only target field in db.
-	if len(e.Jcontact.Name) == 0 {
-		database.Update(e, UNLST, e.Jcontact.List)
-	} else {
-		database.Update(e, UNAME, e.Jcontact.Name)
+	if indexOfUpgradable == 0 {
+		database.Update(e, database.UNLST)
+	}
+	if indexOfUpgradable == 1 {
+		database.Update(e, database.UNAME)
+	}
+	if indexOfUpgradable == 2 {
+		database.Update(e, database.UNUMB)
 	}
 	if e.Error != nil {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
