@@ -139,6 +139,7 @@ func whichURI(r *http.Request) byte {
 // updates list and vice versa
 func Update(w http.ResponseWriter, r *http.Request) {
 	e := &models.Entries{}
+	upgradable := ""
 	request(w, r, e)
 	if e.Error != nil {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
@@ -147,14 +148,15 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	indexOfUpgradable := whichURI(r)
 	//Updates only target field in db.
 	if indexOfUpgradable == 0 {
-		database.Update(e, database.UNLST)
+		upgradable = database.UNLST
 	}
 	if indexOfUpgradable == 1 {
-		database.Update(e, database.UNAME)
+		upgradable = database.UNAME
 	}
 	if indexOfUpgradable == 2 {
-		database.Update(e, database.UNUMB)
+		upgradable = database.UNUMB
 	}
+	database.Update(e, upgradable)
 	if e.Error != nil {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
