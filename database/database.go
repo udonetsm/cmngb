@@ -1,6 +1,7 @@
 package database
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -96,27 +97,31 @@ func Create(e *models.Entries) {
 	}
 }
 
-func makeCmd(e *models.Entries, u string) string {
-	switch u {
-	case UNAME:
-		return fmt.Sprintf("update entries set contact=jsonb_set(contact, '{%s}', '%s') where id='%s' returning contact",
-			u, e.Jcontact.Name, e.Id)
-	case UNUMB:
-		return fmt.Sprintf("update entries set contact=jsonb_set(contact, '{%s}', '%v'), id='%s' where id='%s' returning contact",
-			u, e.Jcontact.Number, e.Jcontact.Number, e.Id)
-	case UNLST:
-		s := "["
-		for i, v := range e.Jcontact.List {
-			if i == len(e.Jcontact.List)-1 {
-				s += "\"" + v + "\"]"
-				return fmt.Sprintf("update entries set contact=jsonb_set(contact, '{%s}', '%v') where id='%s' returning contact",
-					u, s, e.Id)
-			}
-			s += "\"" + v + "\" ,"
+func makeList(list []string) (value bytes.Buffer) {
+	value.WriteString("[")
+	for i, v := range list {
+		value.WriteString("\"" + v + "\"")
+		if i == len(list)-1 {
+			value.WriteString("]")
+			break
 		}
+		value.WriteString(",")
 	}
-	e.Error = gorm.ErrRecordNotFound
-	return ""
+	return
+}
+
+func buildCommandArray(e *models.Entries, u string) (cmd bytes.Buffer) {
+	cmd.WriteString("update entries set contact=")
+	if u == UNLST {
+		list := makeList(e.Jcontact.List)
+		cmd.WriteString(fmt.Sprintf("jsonb_set(contact, '{%s}', '%v')", UNLST, list.String()))
+	} else if u == UNAME {
+		cmd.WriteString(fmt.Sprintf("jsonb_set(contact, '{%s}', '\"%s\"')", UNAME, e.Jcontact.Name))
+	} else if u == UNUMB {
+		cmd.WriteString(fmt.Sprintf("jsonb_set(contact, '{%s}', '%s'), id='%s'", UNUMB, e.Jcontact.Number, e.Jcontact.Number))
+	}
+	cmd.WriteString(fmt.Sprintf("where id='%s' returning contact", e.Id))
+	return
 }
 
 func Update(e *models.Entries, u string) {
@@ -124,8 +129,12 @@ func Update(e *models.Entries, u string) {
 	if e.Error != nil {
 		return
 	}
-	cmd := makeCmd(e, u)
-	rows, err := db.Raw(cmd).Rows()
+	cmd := buildCommandArray(e, u)
+	if len(cmd.String()) == 0 {
+		e.Error = gorm.ErrInvalidField
+		return
+	}
+	rows, err := db.Raw(cmd.String()).Rows()
 	if err != nil {
 		e.Error = err
 		return
@@ -134,7 +143,8 @@ func Update(e *models.Entries, u string) {
 		err := rows.Scan(&e.Contact)
 		if err != nil {
 			e.Error = err
-			return
 		}
+		return
 	}
+	e.Error = gorm.ErrRecordNotFound
 }
