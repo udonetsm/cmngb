@@ -140,10 +140,7 @@ func Update(e *models.Entries, u string) {
 		return
 	}
 	if rows.Next() {
-		err := rows.Scan(&e.Contact)
-		if err != nil {
-			e.Error = err
-		}
+		e.Error = rows.Scan(&e.Contact)
 		return
 	}
 	e.Error = gorm.ErrRecordNotFound
