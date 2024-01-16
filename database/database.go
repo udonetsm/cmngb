@@ -110,17 +110,22 @@ func makeList(list []string) (value bytes.Buffer) {
 	return
 }
 
-func buildCommandArray(e *models.Entries, u string) (cmd bytes.Buffer) {
-	cmd.WriteString("update entries set contact=")
-	if u == UNLST {
+func buildCommandArray(e *models.Entries, u string) (cmd []string) {
+	cmd = append(cmd, "update entries set contact=contact || '{")
+	if len(e.Jcontact.List) > 0 {
 		list := makeList(e.Jcontact.List)
-		cmd.WriteString(fmt.Sprintf("jsonb_set(contact, '{%s}', '%v')", UNLST, list.String()))
-	} else if u == UNAME {
-		cmd.WriteString(fmt.Sprintf("jsonb_set(contact, '{%s}', '\"%s\"')", UNAME, e.Jcontact.Name))
-	} else if u == UNUMB {
-		cmd.WriteString(fmt.Sprintf("jsonb_set(contact, '{%s}', '%s'), id='%s'", UNUMB, e.Jcontact.Number, e.Jcontact.Number))
+		cmd = append(cmd, fmt.Sprintf("\"%s\": %v", UNLST, list.String()))
 	}
-	cmd.WriteString(fmt.Sprintf("where id='%s' returning contact", e.Id))
+	if len(e.Jcontact.Name) > 0 {
+		cmd = append(cmd, fmt.Sprintf("\"%s\": \"%s\"", UNAME, e.Jcontact.Name))
+	}
+	if len(e.Jcontact.Number) > 0 {
+		cmd = append(cmd, fmt.Sprintf("\"%s\": \"%s\"", UNUMB, e.Jcontact.Number))
+		cmd = append(cmd, fmt.Sprintf("}', id='%s' where id='%s' returnning contact",
+			e.Jcontact.Number, e.Jcontact.Number))
+		return
+	}
+	cmd = append(cmd, fmt.Sprintf("}' where id='%s' returning contact", e.Id))
 	return
 }
 
@@ -130,11 +135,13 @@ func Update(e *models.Entries, u string) {
 		return
 	}
 	cmd := buildCommandArray(e, u)
-	if len(cmd.String()) == 0 {
+	if len(cmd) == 0 {
 		e.Error = gorm.ErrInvalidField
 		return
 	}
-	rows, err := db.Raw(cmd.String()).Rows()
+	fmt.Println(cmd)
+	return
+	rows, err := db.Raw("").Rows()
 	if err != nil {
 		e.Error = err
 		return
@@ -144,4 +151,8 @@ func Update(e *models.Entries, u string) {
 		return
 	}
 	e.Error = gorm.ErrRecordNotFound
+}
+
+func u(e *models.Entries) {
+
 }
