@@ -81,20 +81,23 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
+
 	use.Match(e, use.ENME)
 	if e.Error != nil {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
-
-	e.Jcontact.Number = e.Id
+	use.Match(e, use.EQAL)
+	if e.Error != nil {
+		fmt.Fprintln(w, e.Error)
+		e.Jcontact.Number = e.Id
+	}
+	e.Contact = string(models.PackingContact(e.Jcontact, e))
 	// Pack all data to json
-	data := models.PackingEntry(e, e.Jcontact)
 	if e.Error != nil {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
-	e.Contact = string(data)
 	e.Jcontact = nil
 	// Try to insert record in db
 	database.Create(e)
@@ -105,58 +108,17 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	ok(w, e.Contact, e.Id)
 }
 
-// Separate function because updates json field and id field
-func UpdateNumber(w http.ResponseWriter, r *http.Request) {
-	e := &models.Entries{}
-	request(w, r, e)
-	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
-		return
-	}
-	database.Update(e, database.UNUMB)
-	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
-		return
-	}
-	ok(w, e.Contact, e.Id)
-}
-
-func whichURI(r *http.Request) byte {
-	if r.RequestURI == "/update/"+database.UNLST {
-		return 0
-	}
-	if r.RequestURI == "/update/"+database.UNAME {
-		return 1
-	}
-	if r.RequestURI == "/update/"+database.UNUMB {
-		return 2
-	}
-	return 3
-}
-
 // Updates target json field in database
 // If name field in request json is empty
 // updates list and vice versa
 func Update(w http.ResponseWriter, r *http.Request) {
 	e := &models.Entries{}
-	upgradable := ""
 	request(w, r, e)
 	if e.Error != nil {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
-	indexOfUpgradable := whichURI(r)
-	//Updates only target field in db.
-	if indexOfUpgradable == 0 {
-		upgradable = database.UNLST
-	}
-	if indexOfUpgradable == 1 {
-		upgradable = database.UNAME
-	}
-	if indexOfUpgradable == 2 {
-		upgradable = database.UNUMB
-	}
-	database.Update(e, upgradable)
+	database.Update(e)
 	if e.Error != nil {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
@@ -191,7 +153,9 @@ func request(w http.ResponseWriter, r *http.Request, e *models.Entries) {
 		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
 		return
 	}
-	models.EntryUnpacking(e, data)
+	models.UnpackingEntry(e, data)
+	cdata := models.PackingContact(e.Jcontact, e)
+	e.Contact = string(cdata)
 	r.Body = io.NopCloser(bytes.NewBuffer(data))
 }
 
