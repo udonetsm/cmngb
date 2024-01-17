@@ -97,62 +97,37 @@ func Create(e *models.Entries) {
 	}
 }
 
-func makeList(list []string) (value bytes.Buffer) {
-	value.WriteString("[")
-	for i, v := range list {
-		value.WriteString("\"" + v + "\"")
-		if i == len(list)-1 {
-			value.WriteString("]")
-			break
-		}
-		value.WriteString(",")
+// Make command update for call gorm function Exec or Raw.
+func buildCmd(e *models.Entries) (cmd bytes.Buffer) {
+	cmd.WriteString("update entries set ")
+	if len(e.Jcontact.Number) == 0 {
+		cmd.WriteString(fmt.Sprintf("id='%s', ", e.Id))
+	} else {
+		cmd.WriteString(fmt.Sprintf("id='%s', ", e.Jcontact.Number))
 	}
+	cmd.WriteString(fmt.Sprintf("contact=contact||'%s'", e.Contact))
+	cmd.WriteString(fmt.Sprintf(" where id='%s' ", e.Id))
+	cmd.WriteString("returning contact")
 	return
 }
 
-func buildCommandArray(e *models.Entries, u string) (cmd []string) {
-	cmd = append(cmd, "update entries set contact=contact || '{")
-	if len(e.Jcontact.List) > 0 {
-		list := makeList(e.Jcontact.List)
-		cmd = append(cmd, fmt.Sprintf("\"%s\": %v", UNLST, list.String()))
-	}
-	if len(e.Jcontact.Name) > 0 {
-		cmd = append(cmd, fmt.Sprintf("\"%s\": \"%s\"", UNAME, e.Jcontact.Name))
-	}
-	if len(e.Jcontact.Number) > 0 {
-		cmd = append(cmd, fmt.Sprintf("\"%s\": \"%s\"", UNUMB, e.Jcontact.Number))
-		cmd = append(cmd, fmt.Sprintf("}', id='%s' where id='%s' returnning contact",
-			e.Jcontact.Number, e.Jcontact.Number))
-		return
-	}
-	cmd = append(cmd, fmt.Sprintf("}' where id='%s' returning contact", e.Id))
-	return
-}
-
-func Update(e *models.Entries, u string) {
+// Updates json object in db. Updates only fields got from request. Other fields doesn't update
+func Update(e *models.Entries) {
 	db := LoadDb(e)
 	if e.Error != nil {
 		return
 	}
-	cmd := buildCommandArray(e, u)
-	if len(cmd) == 0 {
-		e.Error = gorm.ErrInvalidField
-		return
-	}
-	fmt.Println(cmd)
-	return
-	rows, err := db.Raw("").Rows()
+	cmd := buildCmd(e)
+	rows, err := db.Raw(cmd.String()).Rows()
 	if err != nil {
 		e.Error = err
 		return
 	}
+	e.Contact = ""
 	if rows.Next() {
 		e.Error = rows.Scan(&e.Contact)
 		return
+	} else {
+		e.Error = gorm.ErrRecordNotFound
 	}
-	e.Error = gorm.ErrRecordNotFound
-}
-
-func u(e *models.Entries) {
-
 }
