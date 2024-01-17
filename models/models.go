@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"io"
 )
 
 type Entries struct {
@@ -18,42 +19,64 @@ type Contact struct {
 	List   []string `json:"list,omitempty"`
 }
 
-type EntryUnpacker interface {
-	UnpackEntry(data []byte)
-}
-
-type EntryPacker interface {
-	PackEntrie(c *Contact) []byte
-}
-
-func (e *Entries) PackEntrie(c *Contact) (data []byte) {
-	data, err := json.Marshal(e.Jcontact)
-	if err != nil {
-		e.Error = err
-		return nil
-	}
-	return
-}
-
-func PackingEntry(pu EntryPackUnpacker, c *Contact) (data []byte) {
-	data = pu.PackEntrie(c)
-	return
+func (e *Entries) PackEntry(out io.Writer) {
+	encoder := json.NewEncoder(out)
+	e.Error = encoder.Encode(e)
 }
 
 func (e *Entries) UnpackEntry(data []byte) {
-	err := json.Unmarshal(data, e)
-	if err != nil {
-		e.Error = err
+	e.Error = json.Unmarshal(data, e)
+}
+
+func (c *Contact) PackContact(e *Entries) []byte {
+	data, err := json.Marshal(c)
+	e.Error = err
+	return data
+}
+
+func (c *Contact) UnpackContact(data []byte, e *Entries) {
+	e.Error = json.Unmarshal(data, c)
+	if e.Error != nil {
 		return
 	}
-	e.Error = err
 }
 
-func EntryUnpacking(pu EntryPackUnpacker, data []byte) {
-	pu.UnpackEntry(data)
+type ContactPacker interface {
+	PackContact(*Entries) []byte
 }
 
-type EntryPackUnpacker interface {
+type ContactUnpacker interface {
+	UnpackContact([]byte, *Entries)
+}
+
+type EntryPacker interface {
+	PackEntry(io.Writer)
+}
+
+type EntryUnpacker interface {
+	UnpackEntry([]byte)
+}
+
+type PackUnpackerContact interface {
+	ContactPacker
+	ContactUnpacker
+}
+
+type PackUnpackerEntry interface {
 	EntryPacker
 	EntryUnpacker
+}
+
+func PakcingEntry(pue PackUnpackerEntry, out io.Writer) {
+	pue.PackEntry(out)
+}
+func UnpackingEntry(pue PackUnpackerEntry, data []byte) {
+	pue.UnpackEntry(data)
+}
+func PackingContact(puc PackUnpackerContact, e *Entries) (data []byte) {
+	data = puc.PackContact(e)
+	return
+}
+func UnpackingContact(puc PackUnpackerContact, data []byte, e *Entries) {
+	puc.UnpackContact(data, e)
 }
