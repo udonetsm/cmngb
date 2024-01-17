@@ -2,6 +2,7 @@ package use
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 
 	"github.com/udonetsm/cmngb/models"
@@ -20,27 +21,27 @@ const (
 func Match(e *models.Entries, matchable string) {
 	var exp *regexp.Regexp
 	switch matchable {
-	case "name":
+	case ENME:
 		exp = regexp.MustCompile(regexpName)
 		if ok := exp.Match([]byte(e.Jcontact.Name)); !ok {
 			e.Error = errors.New("INVALID NAME")
 			return
 		}
-	case "entrynumber":
+	case ENUM:
 		exp = regexp.MustCompile(regexpNumber)
 		if ok := exp.Match([]byte(e.Id)); !ok || e.Id == "" {
 			e.Error = errors.New("INVALID ENTRY NUMBER")
 			return
 		}
-	case "contactnumber":
+	case CNUM:
 		exp = regexp.MustCompile(regexpNumber)
 		if ok := exp.Match([]byte(e.Jcontact.Number)); !ok {
 			e.Error = errors.New("INVALID CONTACT NUMBER")
 			return
 		}
-	case "contactandentrynumbers":
+	case EQAL:
 		if e.Id != e.Jcontact.Number {
-			e.Error = errors.New(ENUM + e.Id + " AND " + CNUM + e.Jcontact.Number + " AREN'T EQUAL")
+			e.Error = fmt.Errorf("%s %s AND %s %s AREN'T EQUAL", ENUM, e.Id, CNUM, e.Jcontact.Number)
 			return
 		}
 	}
