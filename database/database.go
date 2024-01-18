@@ -70,7 +70,7 @@ func Search(e *models.Entries) {
 	}
 }
 
-func DeleteById(e *models.Entries) {
+func Delete(e *models.Entries) {
 	db := LoadDb(e)
 	if e.Error != nil {
 		return
