@@ -41,7 +41,7 @@ func Match(e *models.Entries, matchable string) {
 		}
 	case EQAL:
 		if e.Id != e.Jcontact.Number {
-			e.Error = fmt.Errorf("%s %s AND %s %s AREN'T EQUAL(contact number has been set like entry number)", ENUM, e.Id, CNUM, e.Jcontact.Number)
+			e.Error = fmt.Errorf("%s %s AND %s %s AREN'T EQUAL(entry number has been set like contact number)", ENUM, e.Id, CNUM, e.Jcontact.Number)
 			return
 		}
 	}
