@@ -29,10 +29,10 @@ func Info(w http.ResponseWriter, r *http.Request) {
 	request(w, r, e)
 	database.Info(e)
 	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
 	}
-	ok(w, e.Contact, e.Id)
+	ok(w, e)
 }
 
 // Get target name from request json and
@@ -41,35 +41,35 @@ func Search(w http.ResponseWriter, r *http.Request) {
 	e := &models.Entries{}
 	request(w, r, e)
 	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Contact, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
 	}
-	searchBy := e.Jcontact.Name
 	// call database function Search
 	database.Search(e)
 	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Contact, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
 	}
-	ok(w, e.ContactList, searchBy)
+	e.Id = e.Jcontact.Name
+	ok(w, e)
 }
 
 // Get target id from request json and
 // delete record from database using it
-func DeleteById(w http.ResponseWriter, r *http.Request) {
+func Delete(w http.ResponseWriter, r *http.Request) {
 	e := &models.Entries{}
 	request(w, r, e)
 	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
 	}
 	// call database function Delete
-	database.DeleteById(e)
+	database.Delete(e)
 	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
 	}
-	ok(w, e.Contact, e.Id)
+	ok(w, e)
 }
 
 // Get data from request json and
@@ -78,34 +78,35 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	e := &models.Entries{}
 	request(w, r, e)
 	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
 	}
 
-	use.Match(e, use.ENME)
+	use.Match(e, use.NAME)
 	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
 	}
 	use.Match(e, use.EQAL)
 	if e.Error != nil {
-		fmt.Fprintln(w, e.Error)
 		e.Jcontact.Number = e.Id
+		e.ErrMsg = e.Error.Error()
+		e.Error = nil
 	}
 	e.Contact = string(models.PackingContact(e.Jcontact, e))
 	// Pack all data to json
 	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
 	}
 	e.Jcontact = nil
 	// Try to insert record in db
 	database.Create(e)
 	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
 	}
-	ok(w, e.Contact, e.Id)
+	ok(w, e)
 }
 
 // Updates target json field in database
@@ -115,15 +116,22 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	e := &models.Entries{}
 	request(w, r, e)
 	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
+	}
+	if len(e.Jcontact.Name) > 0 {
+		use.Match(e, use.NAME)
+		if e.Error != nil {
+			errs(w, http.StatusBadRequest, e)
+			return
+		}
 	}
 	database.Update(e)
 	if e.Error != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
 	}
-	ok(w, e.Contact, e.Id)
+	ok(w, e)
 }
 
 func MW(next http.HandlerFunc) http.HandlerFunc {
@@ -132,12 +140,12 @@ func MW(next http.HandlerFunc) http.HandlerFunc {
 		e := &models.Entries{}
 		request(w, r, e)
 		if e.Error != nil {
-			errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+			errs(w, http.StatusBadRequest, e)
 			return
 		}
 		use.Match(e, use.ENUM)
 		if e.Error != nil {
-			errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+			errs(w, http.StatusBadRequest, e)
 			return
 		}
 		next.ServeHTTP(w, r)
@@ -150,7 +158,7 @@ func MW(next http.HandlerFunc) http.HandlerFunc {
 func request(w http.ResponseWriter, r *http.Request, e *models.Entries) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		errs(w, http.StatusBadRequest, nil, e.Id, e.Error)
+		errs(w, http.StatusBadRequest, e)
 		return
 	}
 	models.UnpackingEntry(e, data)
@@ -161,15 +169,20 @@ func request(w http.ResponseWriter, r *http.Request, e *models.Entries) {
 
 // This is a local function which logging errors and
 // writes it to the ResponseWriter...
-func errs(w http.ResponseWriter, status int, a ...any) {
-	fmt.Fprintln(w, a[ERROR])
-	log.Printf("[%v | %v] ", a[ERROR], a[TARGET])
+func errs(w http.ResponseWriter, status int, e *models.Entries) {
+	//write errorAnswer json
+	log.Printf("[%v | %v] ", e.Id, e.Error)
+	ea := &models.Entries{ErrMsg: e.Error.Error()}
+	models.PackingEntry(ea, w)
 }
 
 // This is a local function which logging success request/response-s
 // and writes answer to the ResponseWriter
-func ok(w http.ResponseWriter, a ...any) {
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, a[CONTACT])
-	log.Printf("[OK FOR TARGET %v] %v", a[TARGET], a[CONTACT])
+func ok(w http.ResponseWriter, e *models.Entries) {
+	log.Printf("OK for [%v] with error %v", e.Id, e.Error)
+	if len(e.ContactList) != 0 {
+		fmt.Fprintln(w, e.ContactList)
+		return
+	}
+	fmt.Fprintln(w, e.Contact)
 }
