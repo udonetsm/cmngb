@@ -8,8 +8,9 @@ import (
 type Entries struct {
 	Id          string   `gorm:"id" json:"id,omitempty"`
 	Jcontact    *Contact `gorm:"-" json:"contact,omitempty"`
-	Contact     string   `gorm:"contact" json:"-"`
-	Error       error    `gorm:"-" json:"error,omitempty"`
+	Contact     string   `gorm:"contact" json:"dbcontact,omitempty"`
+	Error       error    `gorm:"-" json:"-"`
+	ErrMsg      string   `gorm:"-" json:"error,omitempty"`
 	ContactList []string `gorm:"-" json:"contactlist,omitempty"`
 }
 
@@ -21,7 +22,7 @@ type Contact struct {
 
 func (e *Entries) PackEntry(out io.Writer) {
 	encoder := json.NewEncoder(out)
-	e.Error = encoder.Encode(e)
+	encoder.Encode(e)
 }
 
 func (e *Entries) UnpackEntry(data []byte) {
@@ -30,15 +31,14 @@ func (e *Entries) UnpackEntry(data []byte) {
 
 func (c *Contact) PackContact(e *Entries) []byte {
 	data, err := json.Marshal(c)
-	e.Error = err
+	if err != nil {
+		e.Error = err
+	}
 	return data
 }
 
 func (c *Contact) UnpackContact(data []byte, e *Entries) {
 	e.Error = json.Unmarshal(data, c)
-	if e.Error != nil {
-		return
-	}
 }
 
 type ContactPacker interface {
@@ -67,7 +67,7 @@ type PackUnpackerEntry interface {
 	EntryUnpacker
 }
 
-func PakcingEntry(pue PackUnpackerEntry, out io.Writer) {
+func PackingEntry(pue PackUnpackerEntry, out io.Writer) {
 	pue.PackEntry(out)
 }
 func UnpackingEntry(pue PackUnpackerEntry, data []byte) {
