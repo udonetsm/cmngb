@@ -134,6 +134,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	ok(w, e)
 }
 
+// Unpack json from request body, valid id and pass request to the next http.Handler
 func MW(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		r.Header.Set("Accept", "application/json")
@@ -170,19 +171,28 @@ func request(w http.ResponseWriter, r *http.Request, e *models.Entries) {
 // This is a local function which logging errors and
 // writes it to the ResponseWriter...
 func errs(w http.ResponseWriter, status int, e *models.Entries) {
-	//write errorAnswer json
-	log.Printf("[%v | %v] ", e.Id, e.Error)
-	ea := &models.Entries{ErrMsg: e.Error.Error()}
-	models.PackingEntry(ea, w)
+	// Logging errors and target objects from request
+	log.Printf("[%v | ERROR: %v] ", e.Id, e.Error)
+	// Pack and send json with some error to the client
+	models.PackingEntry(&models.Entries{ErrMsg: e.Error.Error()}, w)
 }
 
 // This is a local function which logging success request/response-s
 // and writes answer to the ResponseWriter
 func ok(w http.ResponseWriter, e *models.Entries) {
-	log.Printf("OK for [%v] with error %v", e.Id, e.Error)
+	// Logging success implementation with target as Id and error
+	// Error logging in the create function if contact number and entry number aren't equal.
+	if len(e.ErrMsg) == 0 {
+		e.ErrMsg = "no"
+	}
+	mes := fmt.Sprintf("OK for [%v] with %v errors", e.Id, e.ErrMsg)
 	if len(e.ContactList) != 0 {
+		mes += fmt.Sprintf(" and answer %v", e.ContactList)
+		log.Println(mes)
 		fmt.Fprintln(w, e.ContactList)
 		return
 	}
+	mes += fmt.Sprintf(" and answer %v", e.Contact)
+	log.Println(mes)
 	fmt.Fprintln(w, e.Contact)
 }
