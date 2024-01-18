@@ -6,29 +6,42 @@ import (
 )
 
 type Entries struct {
-	Id          string   `gorm:"id" json:"id,omitempty"`
-	Jcontact    *Contact `gorm:"-" json:"contact,omitempty"`
-	Contact     string   `gorm:"contact" json:"dbcontact,omitempty"`
-	Error       error    `gorm:"-" json:"-"`
-	ErrMsg      string   `gorm:"-" json:"error,omitempty"`
+	// Id is a main field in the table. The field if primary key
+	Id string `gorm:"id" json:"id,omitempty"`
+	// Jcontact for packing contacts to the json object
+	Jcontact *Contact `gorm:"-" json:"contact,omitempty"`
+	// Contact for returning single jsons strings from the database
+	Contact string `gorm:"contact" json:"-"`
+	// Error here is for matching errors with nil and do something
+	// if something went wrong somewhere.
+	// But if somethig went wrong, should using Error.Error() as ErrMsg
+	// for building json answer to the clients
+	Error error `gorm:"-" json:"-"`
+	// ErrMsg for building answer json to the clients
+	ErrMsg string `gorm:"-" json:"error,omitempty"`
+	// Contactlist is for collect all of found contacts in the Search function
 	ContactList []string `gorm:"-" json:"contactlist,omitempty"`
 }
 
+// This is a model of contact
 type Contact struct {
 	Name   string   `json:"name,omitempty"`
 	Number string   `json:"number,omitempty"`
 	List   []string `json:"list,omitempty"`
 }
 
+// Packs entry struct and writes packed entry to the some io.Writer
 func (e *Entries) PackEntry(out io.Writer) {
 	encoder := json.NewEncoder(out)
 	encoder.Encode(e)
 }
 
-func (e *Entries) UnpackEntry(data []byte) {
-	e.Error = json.Unmarshal(data, e)
+// Unpacks packedEntry to the entry struct
+func (e *Entries) UnpackEntry(from []byte) {
+	e.Error = json.Unmarshal(from, e)
 }
 
+// Packs some contact struct, writes error to the enctry error and retrun packed contact(json)
 func (c *Contact) PackContact(e *Entries) []byte {
 	data, err := json.Marshal(c)
 	if err != nil {
@@ -37,8 +50,9 @@ func (c *Contact) PackContact(e *Entries) []byte {
 	return data
 }
 
-func (c *Contact) UnpackContact(data []byte, e *Entries) {
-	e.Error = json.Unmarshal(data, c)
+// Unpack contact object from packetdContact to the contact struct nd writes error to the entry error
+func (contact *Contact) UnpackContact(packedContact []byte, entry *Entries) {
+	entry.Error = json.Unmarshal(packedContact, contact)
 }
 
 type ContactPacker interface {
@@ -67,16 +81,23 @@ type PackUnpackerEntry interface {
 	EntryUnpacker
 }
 
-func PackingEntry(pue PackUnpackerEntry, out io.Writer) {
-	pue.PackEntry(out)
+// Use PackEntry method
+func PackingEntry(entry PackUnpackerEntry, out io.Writer) {
+	entry.PackEntry(out)
 }
-func UnpackingEntry(pue PackUnpackerEntry, data []byte) {
-	pue.UnpackEntry(data)
+
+// Use UnpackEntry method
+func UnpackingEntry(entry PackUnpackerEntry, packedEntry []byte) {
+	entry.UnpackEntry(packedEntry)
 }
-func PackingContact(puc PackUnpackerContact, e *Entries) (data []byte) {
-	data = puc.PackContact(e)
+
+// Use PackContact method
+func PackingContact(contact PackUnpackerContact, e *Entries) (packedContact []byte) {
+	packedContact = contact.PackContact(e)
 	return
 }
-func UnpackingContact(puc PackUnpackerContact, data []byte, e *Entries) {
-	puc.UnpackContact(data, e)
+
+// Use UnpackContact method
+func UnpackingContact(contact PackUnpackerContact, packedContact []byte, errTo *Entries) {
+	contact.UnpackContact(packedContact, errTo)
 }
