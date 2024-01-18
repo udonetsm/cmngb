@@ -13,7 +13,7 @@ const (
 	regexpName   = "^[A-Z][a-z]* [A-Z][a-z]*$"
 	regexpNumber = "^[0-9]*$"
 	ENUM         = "entrynumber"
-	ENME         = "name"
+	NAME         = "name"
 	CNUM         = "contactnumber"
 	EQAL         = "contactandentrynumbers"
 )
@@ -21,7 +21,7 @@ const (
 func Match(e *models.Entries, matchable string) {
 	var exp *regexp.Regexp
 	switch matchable {
-	case ENME:
+	case NAME:
 		exp = regexp.MustCompile(regexpName)
 		if ok := exp.Match([]byte(e.Jcontact.Name)); !ok {
 			e.Error = errors.New("INVALID NAME")
@@ -41,7 +41,7 @@ func Match(e *models.Entries, matchable string) {
 		}
 	case EQAL:
 		if e.Id != e.Jcontact.Number {
-			e.Error = fmt.Errorf("%s %s AND %s %s AREN'T EQUAL", ENUM, e.Id, CNUM, e.Jcontact.Number)
+			e.Error = fmt.Errorf("%s %s AND %s %s AREN'T EQUAL(contact number has been set like entry number)", ENUM, e.Id, CNUM, e.Jcontact.Number)
 			return
 		}
 	}
