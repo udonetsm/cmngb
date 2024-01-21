@@ -14,7 +14,7 @@ type Entries struct {
 	Contact string `gorm:"contact" json:"-"`
 	// Error here is for matching errors with nil and do something
 	// if something went wrong somewhere.
-	// But if somethig went wrong, should using Error.Error() as ErrMsg
+	// But if somethig went wrong, should use Error.Error() as ErrMsg
 	// for building json answer to the clients
 	Error error `gorm:"-" json:"-"`
 	// ErrMsg for building answer json to the clients

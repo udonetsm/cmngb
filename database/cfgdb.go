@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/udonetsm/cmngb/flags"
 	"gopkg.in/yaml.v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -37,6 +38,8 @@ func (y *YAMLObject) YAMLCfg(path string) {
 		y.Error = err
 		return
 	}
+	y.User = flags.NAME
+	y.Pass = flags.PASS
 }
 
 // build database connection string

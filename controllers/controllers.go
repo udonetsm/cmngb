@@ -163,8 +163,7 @@ func request(w http.ResponseWriter, r *http.Request, e *models.Entries) {
 		return
 	}
 	models.UnpackingEntry(e, data)
-	cdata := models.PackingContact(e.Jcontact, e)
-	e.Contact = string(cdata)
+	e.Contact = string(models.PackingContact(e.Jcontact, e))
 	r.Body = io.NopCloser(bytes.NewBuffer(data))
 }
 
