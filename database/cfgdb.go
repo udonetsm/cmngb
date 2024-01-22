@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/udonetsm/cmngb/flags"
+	"github.com/udonetsm/cmngb/models"
 	"gopkg.in/yaml.v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -22,10 +22,17 @@ type YAMLObject struct {
 	Error error  `yaml:"-"`
 }
 
+func CreateTableForUser(db *gorm.DB, e *models.Entries) {
+	s := fmt.Sprintf("create user %s with password '%s'; create table %s_entries"+
+		"(id varchar(20) primary key, contact jsonb); "+
+		"alter table %s_entries owner to %s", e.Owner, e.Secret, e.Owner, e.Owner, e.Owner)
+	e.Error = db.Exec(s).Error
+}
+
 // duck typing for load data base connection config
 type CfgDBGetter interface {
 	YAMLCfg(string)
-	GetDB() *gorm.DB
+	GetDB(*models.Entries) *gorm.DB
 }
 
 // this method read config from target .yaml file and unpack it in object
@@ -40,8 +47,6 @@ func (y *YAMLObject) YAMLCfg(path string) {
 		y.Error = err
 		return
 	}
-	y.User = flags.NAME
-	y.Pass = flags.PASS
 }
 
 func authFailed(err error) bool {
@@ -51,9 +56,15 @@ func authFailed(err error) bool {
 // build database connection string
 // using object built on YAMLCfg function
 // and get database usin built config
-func (y *YAMLObject) GetDB() (db *gorm.DB) {
+func (y *YAMLObject) GetDB(e *models.Entries) (db *gorm.DB) {
 	var err error
-	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", y.User, y.Pass, y.Host, y.Port, y.DBNM, y.SSLM)
+	var dsn string
+	if e.Ok {
+		dsn = fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", y.User, y.Pass, y.Host, y.Port, y.DBNM, y.SSLM)
+
+	} else {
+		dsn = fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", e.Owner, e.Secret, y.Host, y.Port, y.DBNM, y.SSLM)
+	}
 	dialector := postgres.Open(dsn)
 	db, err = gorm.Open(dialector)
 	if err != nil {
@@ -67,8 +78,8 @@ func (y *YAMLObject) GetDB() (db *gorm.DB) {
 }
 
 // using duck typing for load database connection
-func LoadCfgAndGetDB(yg CfgDBGetter, path string) (db *gorm.DB) {
+func LoadCfgAndGetDB(yg CfgDBGetter, path string, e *models.Entries) (db *gorm.DB) {
 	yg.YAMLCfg(path)
-	db = yg.GetDB()
+	db = yg.GetDB(e)
 	return
 }
