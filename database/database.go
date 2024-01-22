@@ -65,9 +65,9 @@ func Search(e *models.Entries) {
 	var rows *sql.Rows
 	var err error
 	if len(e.Jcontact.Name) == 0 {
-		rows, err = db.Model(fmt.Sprintf("%s_entries", e.Owner)).Select("contact").Rows()
+		rows, err = db.Table(fmt.Sprintf("%s_entries", e.Owner)).Select("contact").Rows()
 	} else {
-		rows, err = db.Model(fmt.Sprintf("%s_entries", e.Owner)).
+		rows, err = db.Table(fmt.Sprintf("%s_entries", e.Owner)).
 			Select("contact").
 			Where("contact->>'name' like ?", "%"+e.Jcontact.Name+"%").
 			Rows()
@@ -120,7 +120,7 @@ func GetSecret(e *models.Entries) {
 
 // Make command update for call gorm function Exec or Raw.
 func buildCmd(e *models.Entries) (cmd bytes.Buffer) {
-	cmd.WriteString("update entries set ")
+	cmd.WriteString(fmt.Sprintf("update %s_entries set ", e.Owner))
 	if len(e.Jcontact.Number) == 0 {
 		cmd.WriteString(fmt.Sprintf("id='%s', ", e.Id))
 	} else {
