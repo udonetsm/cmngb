@@ -16,9 +16,23 @@ const (
 	UNLST = "list"
 )
 
+func NewUser(e *models.Entries) {
+	db := LoadDb(e)
+	u := &models.Users{
+		User_name: e.Owner,
+		Secret:    e.Secret,
+	}
+	tx := db.Create(&u)
+	if tx.Error != nil {
+		e.Error = tx.Error
+		return
+	}
+	CreateTableForUser(db, e)
+}
+
 func LoadDb(e *models.Entries) *gorm.DB {
 	y := &YAMLObject{}
-	db := LoadCfgAndGetDB(y, "/etc/cfg.yaml")
+	db := LoadCfgAndGetDB(y, "/etc/cfg.yaml", e)
 	if y.Error != nil {
 		e.Error = y.Error
 		return new(gorm.DB)
@@ -31,7 +45,7 @@ func Info(e *models.Entries) {
 	if e.Error != nil {
 		return
 	}
-	tx := db.First(e)
+	tx := db.Table(fmt.Sprintf("%s_entries", e.Owner)).First(&e)
 	e.Error = tx.Error
 }
 
@@ -51,9 +65,9 @@ func Search(e *models.Entries) {
 	var rows *sql.Rows
 	var err error
 	if len(e.Jcontact.Name) == 0 {
-		rows, err = db.Model(&models.Entries{}).Select("contact").Rows()
+		rows, err = db.Model(fmt.Sprintf("%s_entries", e.Owner)).Select("contact").Rows()
 	} else {
-		rows, err = db.Model(&models.Entries{}).
+		rows, err = db.Model(fmt.Sprintf("%s_entries", e.Owner)).
 			Select("contact").
 			Where("contact->>'name' like ?", "%"+e.Jcontact.Name+"%").
 			Rows()
@@ -73,7 +87,7 @@ func Delete(e *models.Entries) {
 	if e.Error != nil {
 		return
 	}
-	tx := db.First(&e).Delete(&e)
+	tx := db.Table(fmt.Sprintf("%s_entries", e.Owner)).First(&e).Delete(&e)
 	if tx.Error != nil {
 		e.Error = tx.Error
 		return
@@ -88,11 +102,20 @@ func Create(e *models.Entries) {
 	if e.Error != nil {
 		return
 	}
-	tx := db.Create(&e)
+	tx := db.Table(fmt.Sprintf("%s_entries", e.Owner)).Create(&e)
 	if tx.Error != nil {
 		e.Error = tx.Error
 		return
 	}
+}
+
+func GetSecret(e *models.Entries) {
+	db := LoadDb(e)
+	if e.Error != nil {
+		return
+	}
+	tx := db.Table("users").Select("secret").Where("user_name=?", e.Owner).Scan(&e.Secret)
+	e.Error = tx.Error
 }
 
 // Make command update for call gorm function Exec or Raw.
