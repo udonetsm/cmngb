@@ -6,7 +6,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/udonetsm/cmngb/auth"
 	"github.com/udonetsm/cmngb/database"
 	"github.com/udonetsm/cmngb/models"
 	"github.com/udonetsm/cmngb/use"
@@ -132,6 +134,19 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ok(w, e)
+}
+
+func Auth(w http.ResponseWriter, r *http.Request) {
+	e := &models.Entries{}
+	request(w, r, e)
+	e.Owner = r.Header.Get("owner")
+	e.Secret = r.Header.Get("secret")
+	auth.CreateToken(e, int64(time.Second*60*60*24*30))
+	if e.Error != nil {
+		errs(w, http.StatusBadRequest, e)
+		return
+	}
+	models.PackingEntry(&models.Entries{Token: e.Token}, w)
 }
 
 // Unpack json from request body, valid id and pass request to the next http.Handler
