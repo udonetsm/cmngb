@@ -10,12 +10,12 @@ func CreateToken(e *models.Entries, livetime int64) {
 		ExpiresAt: livetime,
 		Id:        e.Owner,
 	})
-	e.Token, e.Error = unsignedToken.SignedString([]byte(e.Secret))
+	e.Token, e.Error = unsignedToken.SignedString([]byte(e.Secret + e.Owner))
 }
 
-func TokenValid(e *models.Entries, secret string) bool {
+func TokenValid(e *models.Entries) bool {
 	token, err := jwt.ParseWithClaims(e.Token, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return []byte(secret), nil
+		return []byte(e.Secret + e.Owner), nil
 	})
 	e.Error = err
 	return token.Valid
