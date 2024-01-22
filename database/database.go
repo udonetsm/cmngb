@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/udonetsm/cmngb/models"
 	"gorm.io/gorm"
@@ -21,8 +20,7 @@ func LoadDb(e *models.Entries) *gorm.DB {
 	y := &YAMLObject{}
 	db := LoadCfgAndGetDB(y, "/etc/cfg.yaml")
 	if y.Error != nil {
-		log.Println(y.Error)
-		e.Error = gorm.ErrInvalidDB
+		e.Error = y.Error
 		return new(gorm.DB)
 	}
 	return db

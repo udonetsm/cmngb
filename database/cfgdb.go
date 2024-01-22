@@ -1,8 +1,10 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/udonetsm/cmngb/flags"
 	"gopkg.in/yaml.v2"
@@ -42,16 +44,24 @@ func (y *YAMLObject) YAMLCfg(path string) {
 	y.Pass = flags.PASS
 }
 
+func authFailed(err error) bool {
+	return strings.Contains(err.Error(), "28P01")
+}
+
 // build database connection string
 // using object built on YAMLCfg function
 // and get database usin built config
 func (y *YAMLObject) GetDB() (db *gorm.DB) {
 	var err error
 	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", y.User, y.Pass, y.Host, y.Port, y.DBNM, y.SSLM)
-	db, err = gorm.Open(postgres.Open(dsn))
+	dialector := postgres.Open(dsn)
+	db, err = gorm.Open(dialector)
 	if err != nil {
-		y.Error = err
-		return
+		if authFailed(err) {
+			y.Error = errors.New("AUTH FAILED")
+		} else {
+			y.Error = err
+		}
 	}
 	return
 }
