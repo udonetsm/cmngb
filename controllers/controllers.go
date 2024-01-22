@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -23,18 +24,44 @@ const (
 	ERROR
 )
 
+func NewUser(w http.ResponseWriter, r *http.Request) {
+	e := &models.Entries{}
+	request(w, r, e)
+	if e.Error != nil {
+		errs(w, http.StatusBadRequest, e)
+		return
+	}
+	database.NewUser(e)
+	if e.Error != nil {
+		fmt.Println(e.Error)
+		errs(w, http.StatusBadRequest, e)
+		return
+	}
+	auth.CreateToken(e, int64(time.Second*60*60*24*30))
+	if e.Error != nil {
+		errs(w, http.StatusBadRequest, e)
+		return
+	}
+	models.PackingEntry(&models.Entries{Token: e.Token}, w)
+	log.Printf("%s got token %s", e.Owner, e.Token)
+}
+
 // Get target id from request json and
 // and get json of contact
 // record from database using it
 func Info(w http.ResponseWriter, r *http.Request) {
 	e := &models.Entries{}
 	request(w, r, e)
+	if e.Error != nil {
+		errs(w, http.StatusBadRequest, e)
+		return
+	}
 	database.Info(e)
 	if e.Error != nil {
 		errs(w, http.StatusBadRequest, e)
 		return
 	}
-	ok(w, e)
+	ok(w, e, http.StatusFound)
 }
 
 // Get target name from request json and
@@ -53,7 +80,7 @@ func Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	e.Id = e.Jcontact.Name
-	ok(w, e)
+	ok(w, e, http.StatusFound)
 }
 
 // Get target id from request json and
@@ -71,7 +98,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		errs(w, http.StatusBadRequest, e)
 		return
 	}
-	ok(w, e)
+	ok(w, e, http.StatusOK)
 }
 
 // Get data from request json and
@@ -108,7 +135,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		errs(w, http.StatusBadRequest, e)
 		return
 	}
-	ok(w, e)
+	ok(w, e, http.StatusCreated)
 }
 
 // Updates target json field in database
@@ -133,7 +160,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		errs(w, http.StatusBadRequest, e)
 		return
 	}
-	ok(w, e)
+	ok(w, e, http.StatusOK)
 }
 
 func Auth(w http.ResponseWriter, r *http.Request) {
@@ -147,6 +174,13 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	models.PackingEntry(&models.Entries{Token: e.Token}, w)
+	log.Printf("%s got token %s", e.Owner, e.Token)
+}
+
+func Valid(r *http.Request, e *models.Entries) {
+	e.Token = r.Header.Get("token")
+	database.GetSecret(e)
+	e.Ok = auth.TokenValid(e)
 }
 
 // Unpack json from request body, valid id and pass request to the next http.Handler
@@ -157,6 +191,12 @@ func MW(next http.HandlerFunc) http.HandlerFunc {
 		request(w, r, e)
 		if e.Error != nil {
 			errs(w, http.StatusBadRequest, e)
+			return
+		}
+		Valid(r, e)
+		if !e.Ok {
+			e.Error = errors.New("INVALID TOKEN")
+			errs(w, http.StatusUnauthorized, e)
 			return
 		}
 		use.Match(e, use.ENUM)
@@ -177,6 +217,9 @@ func request(w http.ResponseWriter, r *http.Request, e *models.Entries) {
 		errs(w, http.StatusBadRequest, e)
 		return
 	}
+	e.Ok = r.RequestURI == "/create/user"
+	e.Owner = r.Header.Get("owner")
+	e.Secret = r.Header.Get("secret")
 	models.UnpackingEntry(e, data)
 	e.Contact = string(models.PackingContact(e.Jcontact, e))
 	r.Body = io.NopCloser(bytes.NewBuffer(data))
@@ -185,6 +228,7 @@ func request(w http.ResponseWriter, r *http.Request, e *models.Entries) {
 // This is a local function which logging errors and
 // writes it to the ResponseWriter...
 func errs(w http.ResponseWriter, status int, e *models.Entries) {
+	w.WriteHeader(status)
 	// Logging errors and target objects from request
 	log.Printf("[%v | ERROR: %v] ", e.Id, e.Error)
 	// Pack and send json with some error to the client
@@ -193,9 +237,10 @@ func errs(w http.ResponseWriter, status int, e *models.Entries) {
 
 // This is a local function which logging success request/response-s
 // and writes answer to the ResponseWriter
-func ok(w http.ResponseWriter, e *models.Entries) {
+func ok(w http.ResponseWriter, e *models.Entries, code int) {
 	// Logging success implementation with target as Id and error
 	// Error logging in the create function if contact number and entry number aren't equal.
+	w.WriteHeader(code)
 	if len(e.ErrMsg) == 0 {
 		e.ErrMsg = "no"
 	}
