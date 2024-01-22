@@ -21,6 +21,9 @@ type Entries struct {
 	ErrMsg string `gorm:"-" json:"error,omitempty"`
 	// Contactlist is for collect all of found contacts in the Search function
 	ContactList []string `gorm:"-" json:"contactlist,omitempty"`
+	Owner       string   `gorm:"owner" json:"-"`
+	Secret      string   `gorm:"-" json:"-"`
+	Token       string   `gorm:"-" json:"token,omitempty"`
 }
 
 // This is a model of contact
