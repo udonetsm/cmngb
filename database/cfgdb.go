@@ -67,7 +67,6 @@ func (y *YAMLObject) GetDB(e *models.Entries) (db *gorm.DB) {
 	} else {
 		dsn = fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", e.Owner, y.Pass, y.Host, y.Port, y.DBNM, y.SSLM)
 	}
-	fmt.Println(dsn)
 	dialector := postgres.Open(dsn)
 	db, err = gorm.Open(dialector)
 	if err != nil {
