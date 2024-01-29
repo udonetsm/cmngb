@@ -10,7 +10,7 @@ import (
 
 // For use it in regexp function
 const (
-	regexpName   = "^[A-Z][a-z]* [A-Z][a-z]*$"
+	regexpName   = "^[A-Z][a-z]* [A-Z][a-z]*"
 	regexpNumber = "^[0-9]*$"
 	ENUM         = "entrynumber"
 	NAME         = "name"
