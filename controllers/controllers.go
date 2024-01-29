@@ -178,7 +178,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 }
 
 func Valid(r *http.Request, e *models.Entries) {
-	e.Token = r.Header.Get("token")
+	e.Token = r.Header.Get("Authorization")
 	database.GetSecret(e)
 	e.Ok = auth.TokenValid(e)
 }
@@ -199,10 +199,12 @@ func MW(next http.HandlerFunc) http.HandlerFunc {
 			errs(w, http.StatusUnauthorized, e)
 			return
 		}
-		use.Match(e, use.ENUM)
-		if e.Error != nil {
-			errs(w, http.StatusBadRequest, e)
-			return
+		if r.URL.RequestURI() != "/get/list" {
+			use.Match(e, use.ENUM)
+			if e.Error != nil {
+				errs(w, http.StatusBadRequest, e)
+				return
+			}
 		}
 		next.ServeHTTP(w, r)
 	}
@@ -219,7 +221,6 @@ func request(w http.ResponseWriter, r *http.Request, e *models.Entries) {
 	}
 	e.Ok = r.RequestURI == "/create/user"
 	e.Owner = r.Header.Get("owner")
-	e.Secret = r.Header.Get("secret")
 	models.UnpackingEntry(e, data)
 	e.Contact = string(models.PackingContact(e.Jcontact, e))
 	r.Body = io.NopCloser(bytes.NewBuffer(data))
