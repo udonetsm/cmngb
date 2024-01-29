@@ -17,7 +17,7 @@ const (
 )
 
 func NewUser(e *models.Entries) {
-	db := LoadDb(e)
+	db, y := LoadDb(e)
 	u := &models.Users{
 		User_name: e.Owner,
 		Secret:    e.Secret,
@@ -27,21 +27,21 @@ func NewUser(e *models.Entries) {
 		e.Error = tx.Error
 		return
 	}
-	CreateTableForUser(db, e)
+	CreateTableForUser(db, e, y)
 }
 
-func LoadDb(e *models.Entries) *gorm.DB {
+func LoadDb(e *models.Entries) (*gorm.DB, *YAMLObject) {
 	y := &YAMLObject{}
 	db := LoadCfgAndGetDB(y, "/etc/cfg.yaml", e)
 	if y.Error != nil {
 		e.Error = y.Error
-		return new(gorm.DB)
+		return new(gorm.DB), new(YAMLObject)
 	}
-	return db
+	return db, y
 }
 
 func Info(e *models.Entries) {
-	db := LoadDb(e)
+	db, _ := LoadDb(e)
 	if e.Error != nil {
 		return
 	}
@@ -58,7 +58,7 @@ func JSONvalidator(data []byte, a any) bool {
 // target string in the name field. If Name field is
 // empty, function returns all of contacts in the storage.
 func Search(e *models.Entries) {
-	db := LoadDb(e)
+	db, _ := LoadDb(e)
 	if e.Error != nil {
 		return
 	}
@@ -83,7 +83,7 @@ func Search(e *models.Entries) {
 }
 
 func Delete(e *models.Entries) {
-	db := LoadDb(e)
+	db, _ := LoadDb(e)
 	if e.Error != nil {
 		return
 	}
@@ -98,7 +98,7 @@ func Delete(e *models.Entries) {
 // target string in the name field. If Name field is
 // empty, function returns all of contacts in the storage.
 func Create(e *models.Entries) {
-	db := LoadDb(e)
+	db, _ := LoadDb(e)
 	if e.Error != nil {
 		return
 	}
@@ -110,7 +110,7 @@ func Create(e *models.Entries) {
 }
 
 func GetSecret(e *models.Entries) {
-	db := LoadDb(e)
+	db, _ := LoadDb(e)
 	if e.Error != nil {
 		return
 	}
@@ -134,7 +134,7 @@ func buildCmd(e *models.Entries) (cmd bytes.Buffer) {
 
 // Updates json object in db. Updates only fields got from request. Other fields doesn't update
 func Update(e *models.Entries) {
-	db := LoadDb(e)
+	db, _ := LoadDb(e)
 	if e.Error != nil {
 		return
 	}

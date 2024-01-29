@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/udonetsm/cmngb/flags"
 	"github.com/udonetsm/cmngb/models"
 	"gopkg.in/yaml.v2"
 	"gorm.io/driver/postgres"
@@ -22,10 +23,10 @@ type YAMLObject struct {
 	Error error  `yaml:"-"`
 }
 
-func CreateTableForUser(db *gorm.DB, e *models.Entries) {
+func CreateTableForUser(db *gorm.DB, e *models.Entries, y *YAMLObject) {
 	s := fmt.Sprintf("create user %s with password '%s'; create table %s_entries"+
 		"(id varchar(20) primary key, contact jsonb); "+
-		"alter table %s_entries owner to %s", e.Owner, e.Secret, e.Owner, e.Owner, e.Owner)
+		"alter table %s_entries owner to %s", e.Owner, y.Pass, e.Owner, e.Owner, e.Owner)
 	e.Error = db.Exec(s).Error
 }
 
@@ -60,11 +61,13 @@ func (y *YAMLObject) GetDB(e *models.Entries) (db *gorm.DB) {
 	var err error
 	var dsn string
 	if e.Ok {
+		y.User = flags.DBUSER
+		y.Pass = flags.DBPASS
 		dsn = fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", y.User, y.Pass, y.Host, y.Port, y.DBNM, y.SSLM)
-
 	} else {
-		dsn = fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", e.Owner, e.Secret, y.Host, y.Port, y.DBNM, y.SSLM)
+		dsn = fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s", e.Owner, y.Pass, y.Host, y.Port, y.DBNM, y.SSLM)
 	}
+	fmt.Println(dsn)
 	dialector := postgres.Open(dsn)
 	db, err = gorm.Open(dialector)
 	if err != nil {
